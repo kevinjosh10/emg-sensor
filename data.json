@@ -1,0 +1,19 @@
+{
+  "signals": {
+    "eye": 0,
+    "fist": 0
+  },
+  "thresholds": {
+    "eye": 500,
+    "fist": 600
+  },
+  "events": {
+    "event_1": {
+      "ts": "00:00:00",
+      "html": "<span class='c-eye'>Test Blink</span>",
+      "created": {
+        ".sv": "timestamp"
+      }
+    }
+  }
+}
