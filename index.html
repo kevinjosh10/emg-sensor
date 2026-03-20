@@ -3,828 +3,1059 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NeuroCursor Dashboard</title>
-
-  <!-- ════════════════════════════════════════════════════════════════
-       ① FIREBASE SDK SCRIPT TAGS  ← NEW (add these before Chart.js)
-       Use the Firebase compat CDN — no npm, no bundler required.
-       ════════════════════════════════════════════════════════════════ -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
-  <!-- Chart.js — UNCHANGED -->
+  <title>SynapseLink Dashboard</title>
+ 
+  <!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  FIREBASE MODULAR SDK  (v10 — ESM via CDN, no npm/bundler needed)   ║
+  ║                                                                      ║
+  ║  We use type="module" on the main <script> tag below so we can      ║
+  ║  import { ... } from these CDN URLs directly in the browser.        ║
+  ║                                                                      ║
+  ║  Modules loaded:                                                     ║
+  ║    • firebase/app      — core initialisation                        ║
+  ║    • firebase/database — Realtime Database read/write               ║
+  ║    • firebase/analytics— page-view analytics (optional)             ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+  NOTE: No <script src="..."> tags needed for modular SDK —
+        all imports live inside the type="module" script at the bottom.
+  -->
+ 
+  <!-- Chart.js — loaded as a classic script so it is globally available -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-
-  <!-- Fonts — UNCHANGED -->
+ 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+ 
+  <!-- ═══════════════════════════════════════════════════════════════
+       STYLES
+       ═══════════════════════════════════════════════════════════════ -->
   <style>
-    /* ══════════════════════════════════════════════════════════════
-       ALL CSS BELOW IS UNCHANGED FROM YOUR ORIGINAL index.html
-       except for the two new rules marked ← NEW
-       ══════════════════════════════════════════════════════════════ */
-
+    /* ── Design tokens ─────────────────────────────────────────── */
     :root {
-      --bg:          #0d0d0f;
-      --surface:     #131318;
-      --surface2:    #1a1a22;
-      --border:      #26262f;
-      --text:        #d4d4dc;
-      --text-muted:  #5a5a72;
-      --accent-eye:  #3b9eff;
-      --accent-fist: #ff6b3b;
-      --green:       #2dca73;
-      --red:         #ff4444;   /* ← NEW: disconnected colour */
-      --yellow:      #f5c842;
-      --mono:        'JetBrains Mono', monospace;
-      --sans:        'DM Sans', sans-serif;
+      --bg:           #080809;
+      --surface:      #0f0f12;
+      --surface2:     #16161c;
+      --border:       #1f1f28;
+      --border-hi:    #2e2e3d;
+      --text:         #c8c8d8;
+      --text-dim:     #4a4a62;
+      --text-muted:   #6b6b88;
+      --eye:          #38b6ff;      /* blue  — eye / blink channel  */
+      --fist:         #ff5c38;      /* orange — fist channel         */
+      --ok:           #22c97a;      /* green  — connected / ok       */
+      --warn:         #f4c430;      /* yellow — events / direction   */
+      --err:          #ff3b3b;      /* red    — disconnected         */
+      --dbl:          #c07fff;      /* violet — double-blink         */
+      --mono:         'JetBrains Mono', monospace;
+      --display:      'Syne', sans-serif;
     }
-
+ 
+    /* ── Reset ─────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; line-height: 1.55; }
+    button { font-family: inherit; }
+ 
+    /* ── App shell ─────────────────────────────────────────────── */
     #app {
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto auto 1fr auto;
       min-height: 100vh;
     }
-
-    /* ── Header ─────────────────────────────────────────────────── */
-    header {
+ 
+    /* ── Top bar ───────────────────────────────────────────────── */
+    #topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 28px;
-      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 52px;
       background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
-    .header-left h1 {
-      font-family: var(--sans);
+    .tb-left {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .tb-title {
+      font-family: var(--display);
       font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       color: #fff;
     }
-    .header-left span {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-    /* ← NEW: dot transitions between red (disconnected) and green (connected) */
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--red);
-      transition: background 0.4s, box-shadow 0.4s;
-    }
-    .status-dot.connected {
-      background: var(--green);
-      box-shadow: 0 0 6px var(--green);
-    }
-    .latency-display {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .latency-display span { color: var(--yellow); font-weight: 600; }
-
-    /* ← NEW: warning banner shown when Firebase config is placeholder */
-    #fb-banner {
-      display: none;
-      background: #2a1010;
-      border-bottom: 1px solid #5a1010;
-      padding: 8px 28px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: #ff9090;
-    }
-    #fb-banner code { background: rgba(255,255,255,0.08); padding: 1px 4px; border-radius: 3px; }
-
-    /* ── Main ───────────────────────────────────────────────────── */
-    main {
-      padding: 20px 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .top-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    /* ── Direction bar ──────────────────────────────────────────── */
-    .direction-bar {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      padding: 10px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-    }
-    .direction-label {
-      font-size: 11px;
+    .tb-sub {
+      font-size: 10px;
+      color: var(--text-dim);
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--text-muted);
-      font-weight: 500;
     }
-    .direction-arrows { display: flex; gap: 8px; }
-    .dir-arrow {
-      width: 30px; height: 30px;
+    .tb-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+ 
+    /* Connection pill */
+    .conn-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: border-color .3s, color .3s;
+    }
+    .conn-pill.online  { border-color: rgba(34,201,122,.35); color: var(--ok); }
+    .conn-pill.offline { border-color: rgba(255,59,59,.25);  color: var(--err); }
+    .conn-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--err);
+      transition: background .3s, box-shadow .3s;
+    }
+    .conn-pill.online  .conn-dot { background: var(--ok);  box-shadow: 0 0 5px var(--ok); }
+    .conn-pill.offline .conn-dot { background: var(--err); }
+ 
+    /* Latency chip */
+    .lat-chip {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .lat-chip b { color: var(--warn); font-weight: 600; }
+ 
+    /* Mode badge */
+    #mode-badge {
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border: 1px solid var(--border-hi);
+      color: var(--text-dim);
+      transition: all .3s;
+    }
+    #mode-badge.sim  { border-color: rgba(244,196,48,.3); color: var(--warn); }
+    #mode-badge.live { border-color: rgba(34,201,122,.3); color: var(--ok);   }
+ 
+    /* ── Direction strip ───────────────────────────────────────── */
+    #dir-strip {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .ds-label {
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .dir-arrows {
+      display: flex;
+      gap: 6px;
+    }
+    .dir-btn {
+      width: 28px; height: 28px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 4px;
       border: 1px solid var(--border);
-      font-size: 14px;
+      font-size: 13px;
+      color: var(--text-dim);
+      transition: all .15s;
+    }
+    .dir-btn.active {
+      background: rgba(56,182,255,.1);
+      border-color: rgba(56,182,255,.5);
+      color: var(--eye);
+    }
+    .ds-text {
+      font-size: 11px;
       color: var(--text-muted);
-      transition: background .15s, border-color .15s, color .15s;
+      margin-left: auto;
     }
-    .dir-arrow.active {
-      background: rgba(59,158,255,.12);
-      border-color: var(--accent-eye);
-      color: var(--accent-eye);
+    .ds-text strong { color: var(--eye); }
+ 
+    /* Detection badges in strip */
+    .det-badges {
+      display: flex;
+      gap: 8px;
     }
-    .direction-text { font-family: var(--mono); font-size: 12px; color: var(--text-muted); margin-left: auto; }
-    .direction-text strong { color: var(--accent-eye); }
-
-    /* ── Signal panels ──────────────────────────────────────────── */
-    .panel {
+    .det-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity .15s;
+      pointer-events: none;
+    }
+    .det-badge.show { opacity: 1; }
+    .det-badge.b-eye  { background: rgba(56,182,255,.12);  color: var(--eye);  border: 1px solid rgba(56,182,255,.3); }
+    .det-badge.b-fist { background: rgba(255,92,56,.12);   color: var(--fist); border: 1px solid rgba(255,92,56,.3); }
+    .det-badge.b-dbl  { background: rgba(192,127,255,.12); color: var(--dbl);  border: 1px solid rgba(192,127,255,.3); }
+ 
+    /* ── Main grid ─────────────────────────────────────────────── */
+    #main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px 24px;
+      overflow-y: auto;
+    }
+ 
+    /* Signal panels side-by-side */
+    .panel-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+ 
+    /* ── Signal panel card ─────────────────────────────────────── */
+    .sig-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 6px;
       overflow: hidden;
     }
-    .panel-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px;
+    .sc-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
     }
-    .panel-title {
-      font-size: 12px; font-weight: 600;
-      letter-spacing: .06em; text-transform: uppercase; color: var(--text);
+    .sc-title {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
-    .panel-value { font-family: var(--mono); font-size: 20px; font-weight: 600; }
-    .panel-value.eye  { color: var(--accent-eye); }
-    .panel-value.fist { color: var(--accent-fist); }
-    .panel-value-label {
-      font-family: var(--mono); font-size: 10px;
-      color: var(--text-muted); letter-spacing: .06em; text-align: right; line-height: 1.2;
+    .sc-title.eye-col  { color: var(--eye); }
+    .sc-title.fist-col { color: var(--fist); }
+    .sc-live {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
     }
-    .chart-wrap { padding: 12px 16px 8px; height: 200px; position: relative; }
-    .chart-wrap canvas { display: block; }
-    .threshold-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 16px 14px;
+    .sc-val {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .sc-val.eye-col  { color: var(--eye); }
+    .sc-val.fist-col { color: var(--fist); }
+    .sc-unit {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: .06em;
+    }
+ 
+    /* Chart area */
+    .sc-chart {
+      padding: 10px 14px 6px;
+      height: 190px;
+      position: relative;
+    }
+    .sc-chart canvas { display: block; }
+ 
+    /* Threshold row */
+    .sc-thresh {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px 12px;
       border-top: 1px solid var(--border);
     }
-    .threshold-label {
-      font-size: 11px; color: var(--text-muted); letter-spacing: .04em;
-      white-space: nowrap; min-width: 100px;
-      text-transform: uppercase; font-weight: 500;
+    .thr-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-dim);
+      min-width: 95px;
     }
     input[type="range"] {
-      flex: 1; -webkit-appearance: none; appearance: none;
-      height: 3px; border-radius: 2px; background: var(--border);
-      outline: none; cursor: pointer;
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--border-hi);
+      outline: none;
+      cursor: pointer;
     }
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none;
-      width: 14px; height: 14px; border-radius: 50%; cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform .1s;
     }
-    .eye-slider::-webkit-slider-thumb  { background: var(--accent-eye); }
-    .fist-slider::-webkit-slider-thumb { background: var(--accent-fist); }
-    .threshold-value { font-family: var(--mono); font-size: 12px; min-width: 36px; text-align: right; }
-    .threshold-value.eye  { color: var(--accent-eye); }
-    .threshold-value.fist { color: var(--accent-fist); }
-
-    /* ── Detection badges ───────────────────────────────────────── */
-    .detect-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 2px 8px; border-radius: 3px;
-      font-size: 10px; font-weight: 600;
-      font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase;
-      opacity: 0; transition: opacity .2s;
+    input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.3); }
+    .eye-range::-webkit-slider-thumb  { background: var(--eye);  }
+    .fist-range::-webkit-slider-thumb { background: var(--fist); }
+    .thr-val {
+      font-size: 11px;
+      min-width: 32px;
+      text-align: right;
     }
-    .detect-badge.visible { opacity: 1; }
-    .detect-badge.eye  { background: rgba(59,158,255,.15); color: var(--accent-eye);  border: 1px solid rgba(59,158,255,.3); }
-    .detect-badge.fist { background: rgba(255,107,59,.15); color: var(--accent-fist); border: 1px solid rgba(255,107,59,.3); }
-    /* ← NEW badge for double-blink */
-    .detect-badge.dbl  { background: rgba(245,200,66,.15); color: var(--yellow);      border: 1px solid rgba(245,200,66,.3); }
-
-    /* ── Event log ──────────────────────────────────────────────── */
-    .event-log-section {
+    .thr-val.eye-col  { color: var(--eye); }
+    .thr-val.fist-col { color: var(--fist); }
+ 
+    /* ── Event log ─────────────────────────────────────────────── */
+    .log-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 6px; overflow: hidden;
+      border-radius: 6px;
+      overflow: hidden;
     }
-    .log-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 16px;
+    .lc-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px;
       border-bottom: 1px solid var(--border);
     }
-    .log-title {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
+    .lc-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
     }
-    .log-meta { display: flex; gap: 16px; align-items: center; }
-    .log-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-
-    /* ← NEW: Firebase sync indicator in the log header */
-    #fb-sync {
-      display: flex; align-items: center; gap: 5px;
-      font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+    .lc-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
-    #fb-sync-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--text-muted);
-      transition: background .3s, box-shadow .3s;
+    /* Firebase sync dot in log header */
+    .fb-sync {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--text-dim);
     }
-    #fb-sync-dot.synced { background: var(--green); box-shadow: 0 0 4px var(--green); }
-
-    #event-log {
-      height: 160px; overflow-y: auto; padding: 8px 0;
-      font-family: var(--mono); font-size: 12px; line-height: 1.8;
-      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    .fb-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: background .25s, box-shadow .25s;
     }
-    #event-log::-webkit-scrollbar { width: 4px; }
-    #event-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .log-entry {
-      display: flex; align-items: baseline; gap: 10px; padding: 0 16px;
-      animation: fadeIn .2s ease;
+    .fb-dot.pulse { background: var(--ok); box-shadow: 0 0 5px var(--ok); }
+    .ev-count {
+      font-size: 10px;
+      color: var(--text-dim);
     }
-    .log-entry:hover { background: rgba(255,255,255,.02); }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
-    .log-time { color: var(--text-muted); flex-shrink: 0; }
-    .log-msg { color: var(--text); }
-    .log-msg .hl-eye  { color: var(--accent-eye); }
-    .log-msg .hl-fist { color: var(--accent-fist); }
-    .log-msg .hl-dir  { color: var(--yellow); }
-    .log-msg .hl-dbl  { color: var(--yellow); }
-
-    /* ── Footer ─────────────────────────────────────────────────── */
-    footer {
-      padding: 10px 28px;
+    .ev-count b { color: var(--text-muted); }
+ 
+    /* Log body */
+    #log-body {
+      height: 150px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #log-body::-webkit-scrollbar       { width: 3px; }
+    #log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+ 
+    .log-row {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 8px;
+      padding: 3px 14px;
+      font-size: 11px;
+      line-height: 1.7;
+      animation: slideIn .18s ease;
+    }
+    .log-row:hover { background: rgba(255,255,255,.02); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .log-ts  { color: var(--text-dim); }
+    .log-txt { color: var(--text); }
+    .log-txt .c-eye  { color: var(--eye); }
+    .log-txt .c-fist { color: var(--fist); }
+    .log-txt .c-dir  { color: var(--warn); }
+    .log-txt .c-dbl  { color: var(--dbl); }
+    .log-txt .c-ok   { color: var(--ok); }
+    .log-txt .c-err  { color: var(--err); }
+ 
+    /* ── Footer ────────────────────────────────────────────────── */
+    #footer {
+      padding: 8px 24px;
       border-top: 1px solid var(--border);
-      font-size: 11px; color: var(--text-muted); font-family: var(--mono);
-      display: flex; justify-content: space-between;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-dim);
     }
   </style>
 </head>
+ 
 <body>
 <div id="app">
-
-  <!-- ══ HEADER ═══════════════════════════════════════════════════ -->
-  <header>
-    <div class="header-left">
-      <h1>NeuroCursor Dashboard</h1>
-      <!-- Updated subtitle to mention Firebase -->
-      <span>SynapseLink · EMG Signal Monitor · Firebase Realtime DB</span>
+ 
+  <!-- ══════════════════════════════════════════════════════════════
+       TOP BAR
+       ══════════════════════════════════════════════════════════════ -->
+  <header id="topbar">
+    <div class="tb-left">
+      <span class="tb-title">SynapseLink</span>
+      <span class="tb-sub">EMG Dashboard · Realtime DB</span>
     </div>
-    <div class="header-right">
-      <!--
-        Status dot: class toggled by Firebase .info/connected listener.
-        Starts red (disconnected) and turns green when Firebase confirms connection.
-      -->
-      <div class="status-badge">
-        <div class="status-dot" id="status-dot"></div>
-        <span id="status-text">Connecting…</span>
+    <div class="tb-right">
+      <!-- Mode badge: SIM or LIVE -->
+      <span id="mode-badge" class="sim">SIM</span>
+ 
+      <!-- Firebase connection status -->
+      <div class="conn-pill offline" id="conn-pill">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-label">Connecting…</span>
       </div>
-      <div class="latency-display">
-        Latency: <span id="latency-ms">—</span> ms
-      </div>
+ 
+      <!-- Round-trip latency -->
+      <div class="lat-chip">Latency: <b id="lat-ms">—</b> ms</div>
     </div>
   </header>
-
-  <!-- ══ CONFIG WARNING BANNER (hidden unless placeholder config detected) -->
-  <div id="fb-banner">
-    ⚠ Firebase config contains placeholder values.
-    Edit the <code>firebaseConfig</code> object in the &lt;script&gt; block.
-    Running in local-simulation mode until real config is provided.
+ 
+  <!-- ══════════════════════════════════════════════════════════════
+       DIRECTION + DETECTION STRIP
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="dir-strip">
+    <span class="ds-label">Direction</span>
+ 
+    <!-- Arrow buttons — active class toggled by JS -->
+    <div class="dir-arrows">
+      <div class="dir-btn active" id="darr-UP">↑</div>
+      <div class="dir-btn"        id="darr-RIGHT">→</div>
+      <div class="dir-btn"        id="darr-DOWN">↓</div>
+      <div class="dir-btn"        id="darr-LEFT">←</div>
+    </div>
+ 
+    <!-- Detection event badges -->
+    <div class="det-badges">
+      <span class="det-badge b-eye"  id="badge-blink">● Blink</span>
+      <span class="det-badge b-dbl"  id="badge-dbl">● Dbl Blink</span>
+      <span class="det-badge b-fist" id="badge-fist">● Fist</span>
+    </div>
+ 
+    <div class="ds-text">Current: <strong id="dir-label">UP</strong></div>
   </div>
-
-  <!-- ══ MAIN ═════════════════════════════════════════════════════ -->
-  <main>
-
-    <!-- Direction bar — HTML UNCHANGED -->
-    <div class="direction-bar">
-      <span class="direction-label">Direction</span>
-      <div class="direction-arrows">
-        <div class="dir-arrow active" id="dir-up"    title="Up">↑</div>
-        <div class="dir-arrow"        id="dir-right" title="Right">→</div>
-        <div class="dir-arrow"        id="dir-down"  title="Down">↓</div>
-        <div class="dir-arrow"        id="dir-left"  title="Left">←</div>
-      </div>
-      <div class="direction-text">Current: <strong id="dir-label">UP</strong></div>
-    </div>
-
-    <div class="top-row">
-
-      <!-- Eye EMG panel — IDs UNCHANGED (eyeSlider kept exactly) -->
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Eye EMG Signal</span>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span class="detect-badge eye" id="eye-badge">● Blink</span>
-            <!-- ← NEW badge for double-blink -->
-            <span class="detect-badge dbl" id="dbl-badge">● DBL Blink</span>
-            <div>
-              <div class="panel-value eye" id="eye-value">—</div>
-              <div class="panel-value-label">μV · RAW</div>
-            </div>
+ 
+  <!-- ══════════════════════════════════════════════════════════════
+       MAIN CONTENT
+       ══════════════════════════════════════════════════════════════ -->
+  <main id="main">
+ 
+    <div class="panel-row">
+ 
+      <!-- ── Eye EMG Card ─────────────────────────────────────── -->
+      <div class="sig-card">
+        <div class="sc-head">
+          <span class="sc-title eye-col">Eye EMG Signal</span>
+          <div class="sc-live">
+            <span class="sc-val eye-col" id="eye-val">—</span>
+            <span class="sc-unit">μV</span>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="eye-chart"></canvas></div>
-        <div class="threshold-row">
-          <span class="threshold-label">Eye Threshold</span>
-          <!-- id="eyeSlider" — MATCHES YOUR ORIGINAL ID -->
-          <input type="range" class="eye-slider" id="eyeSlider"
+        <div class="sc-chart">
+          <canvas id="eye-chart"></canvas>
+        </div>
+        <div class="sc-thresh">
+          <span class="thr-label">Eye Threshold</span>
+          <!--
+            id="eyeSlider" — writes to Firebase /thresholds/eye on input
+          -->
+          <input type="range" class="eye-range" id="eyeSlider"
                  min="100" max="1000" value="500" step="10" />
-          <span class="threshold-value eye" id="eye-thresh-val">500</span>
+          <span class="thr-val eye-col" id="eye-thr-display">500</span>
         </div>
       </div>
-
-      <!-- Fist EMG panel — IDs UNCHANGED (fistSlider kept exactly) -->
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Fist EMG Signal</span>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span class="detect-badge fist" id="fist-badge">● Fist</span>
-            <div>
-              <div class="panel-value fist" id="fist-value">—</div>
-              <div class="panel-value-label">μV · RAW</div>
-            </div>
+ 
+      <!-- ── Fist EMG Card ─────────────────────────────────────── -->
+      <div class="sig-card">
+        <div class="sc-head">
+          <span class="sc-title fist-col">Fist EMG Signal</span>
+          <div class="sc-live">
+            <span class="sc-val fist-col" id="fist-val">—</span>
+            <span class="sc-unit">μV</span>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="fist-chart"></canvas></div>
-        <div class="threshold-row">
-          <span class="threshold-label">Fist Threshold</span>
-          <!-- id="fistSlider" — MATCHES YOUR ORIGINAL ID -->
-          <input type="range" class="fist-slider" id="fistSlider"
+        <div class="sc-chart">
+          <canvas id="fist-chart"></canvas>
+        </div>
+        <div class="sc-thresh">
+          <span class="thr-label">Fist Threshold</span>
+          <!--
+            id="fistSlider" — writes to Firebase /thresholds/fist on input
+          -->
+          <input type="range" class="fist-range" id="fistSlider"
                  min="100" max="1000" value="600" step="10" />
-          <span class="threshold-value fist" id="fist-thresh-val">600</span>
+          <span class="thr-val fist-col" id="fist-thr-display">600</span>
         </div>
       </div>
-
-    </div><!-- /.top-row -->
-
-    <!-- Event Log — layout UNCHANGED, header gains Firebase sync dot -->
-    <div class="event-log-section">
-      <div class="log-header">
-        <span class="log-title">Event Log</span>
-        <div class="log-meta">
-          <!-- ← NEW: Firebase sync indicator -->
-          <span id="fb-sync">
-            <span id="fb-sync-dot"></span>
-            <span id="fb-sync-label">Firebase</span>
-          </span>
-          <span class="log-count">Events: <span id="event-count">0</span></span>
+ 
+    </div><!-- /.panel-row -->
+ 
+    <!-- ── Event Log ─────────────────────────────────────────────── -->
+    <div class="log-card">
+      <div class="lc-head">
+        <span class="lc-title">Event Log</span>
+        <div class="lc-meta">
+          <!-- Firebase sync flash indicator -->
+          <div class="fb-sync">
+            <div class="fb-dot" id="fb-dot"></div>
+            <span id="fb-label">Firebase</span>
+          </div>
+          <div class="ev-count">Events: <b id="ev-total">0</b></div>
         </div>
       </div>
-      <div id="event-log"><!-- entries prepended by JS --></div>
+      <!-- Log entries are prepended here in real time -->
+      <div id="log-body"></div>
     </div>
-
-  </main>
-
-  <!-- ══ FOOTER ═══════════════════════════════════════════════════ -->
-  <footer>
-    <span>NeuroCursor · SynapseLink · Firebase Realtime Database</span>
-    <span id="runtime">Uptime: 0s</span>
+ 
+  </main><!-- /#main -->
+ 
+  <!-- ══════════════════════════════════════════════════════════════
+       FOOTER
+       ══════════════════════════════════════════════════════════════ -->
+  <footer id="footer">
+    <span>SynapseLink · synapselink-6c405 · Firebase RTDB</span>
+    <span id="uptime-display">Uptime: 0s</span>
   </footer>
-
+ 
 </div><!-- /#app -->
-
-<!-- ══════════════════════════════════════════════════════════════════
-     JAVASCRIPT
-     Sections are numbered to match the integration instructions.
-     ══════════════════════════════════════════════════════════════════ -->
-<script>
-/* ════════════════════════════════════════════════════════════════════
-   ② FIREBASE CONFIGURATION
-   ─────────────────────────────────────────────────────────────────
-   HOW TO FILL THIS IN:
-   1. Open https://console.firebase.google.com
-   2. Select your project → Project Settings → Your Apps
-   3. Click the "</>" web icon if you haven't added a web app yet
-   4. Copy the firebaseConfig object and paste it here, replacing
-      every "YOUR_…" placeholder value below.
-   ════════════════════════════════════════════════════════════════════ */
+ 
+ 
+<!-- ════════════════════════════════════════════════════════════════════
+     MAIN SCRIPT  (type="module" — required for Firebase modular SDK)
+     ════════════════════════════════════════════════════════════════════ -->
+<script type="module">
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 1 — FIREBASE IMPORTS (Modular SDK v10)
+   ══════════════════════════════════════════════════════════════════════
+   The modular SDK is tree-shakeable and uses ES module imports.
+   We load it directly from the Firebase CDN — no npm or bundler needed.
+   Only import what you actually use to keep the bundle lean.           */
+ 
+import { initializeApp }                    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAnalytics }                     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+import {
+  getDatabase,
+  ref,
+  set,
+  push,
+  onValue,
+  serverTimestamp,
+  runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 2 — FIREBASE CONFIGURATION & INITIALISATION
+   ══════════════════════════════════════════════════════════════════════
+   Your real project credentials. These are safe to expose in a
+   frontend — Firebase security is enforced via Database Rules, not
+   by hiding the config.                                                */
+ 
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyAlVijQ9VdYxLUVujMsg1B1II8Ehj0PpLw",
+  authDomain:        "synapselink-6c405.firebaseapp.com",
+  databaseURL:       "https://synapselink-6c405-default-rtdb.firebaseio.com",
+  projectId:         "synapselink-6c405",
+  storageBucket:     "synapselink-6c405.firebasestorage.app",
+  messagingSenderId: "760362445061",
+  appId:             "1:760362445061:web:9dbc7e89605cf4b0cbef6c",
+  measurementId:     "G-ZL5234GQNC"
 };
-
-/* Detect placeholder — run in local-only mode until real config is set */
-const CONFIG_READY = !firebaseConfig.apiKey.startsWith("YOUR_");
-
-/* db will hold the Firebase Database instance once initialised */
-let db = null;
-
-if (CONFIG_READY) {
-  /* ── FIREBASE INIT ─────────────────────────────────────────────── */
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-  console.log("[NeuroCursor] Firebase initialised ✓");
-} else {
-  document.getElementById("fb-banner").style.display = "block";
-  console.warn("[NeuroCursor] Placeholder config — local simulation mode active.");
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   DASHBOARD STATE  (unchanged from your original)
-   ════════════════════════════════════════════════════════════════════ */
-const DATA_POINTS   = 60;
-const UPDATE_MS     = 200;
-const SPIKE_CHANCE  = 0.08;
-const SPIKE_MIN     = 700;
-const SPIKE_MAX     = 1100;
-const BASE_MIN      = 50;
-const BASE_MAX      = 300;
-const COOLDOWN_MS   = 800;
-const DBL_WINDOW_MS = 600;   // max gap between two blinks to count as double
-
-const DIRECTIONS = ['UP','RIGHT','DOWN','LEFT'];
-const DIR_ARROWS  = { UP:'↑', RIGHT:'→', DOWN:'↓', LEFT:'←' };
-const DIR_IDS     = { UP:'dir-up', RIGHT:'dir-right', DOWN:'dir-down', LEFT:'dir-left' };
-
-let dirIndex     = 0;
-let eventCount   = 0;
-let lastBlink    = 0;
-let lastFist     = 0;
-let prevBlink    = 0;   // timestamp of the blink before the last one (double-blink detection)
-const startTime  = performance.now();
-
-const makeArr = (n, v = 0) => Array(n).fill(v);
-const eyeData  = makeArr(DATA_POINTS);
-const fistData = makeArr(DATA_POINTS);
-const labels   = makeArr(DATA_POINTS, '');
-
-/* ════════════════════════════════════════════════════════════════════
-   CHART SETUP  (unchanged from your original)
-   ════════════════════════════════════════════════════════════════════ */
-function hexToRgba(hex, a) {
-  const [r,g,b] = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16));
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-function makeChart(canvasId, color, initThreshold) {
+ 
+/* Initialise Firebase app + services */
+const app       = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db        = getDatabase(app);
+ 
+/* Convenience: shorthand to get a database ref by path */
+const dbRef = (path) => ref(db, path);
+ 
+console.log("[SynapseLink] Firebase initialised ✓  project:", firebaseConfig.projectId);
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 3 — DASHBOARD CONSTANTS & STATE
+   ══════════════════════════════════════════════════════════════════════ */
+ 
+const DATA_POINTS   = 60;      // samples visible in each rolling chart
+const UPDATE_MS     = 200;     // simulation tick interval (ms)
+const SPIKE_CHANCE  = 0.08;    // probability of a spike per tick
+const SPIKE_LO      = 700;     // spike amplitude lower bound (μV)
+const SPIKE_HI      = 1100;    // spike amplitude upper bound (μV)
+const BASE_LO       = 40;      // baseline noise lower bound (μV)
+const BASE_HI       = 280;     // baseline noise upper bound (μV)
+const DEBOUNCE_MS   = 800;     // minimum gap between same-type detections
+const DBL_WINDOW_MS = 550;     // two blinks within this → double-blink
+ 
+/* Direction state machine */
+const DIRS      = ['UP', 'RIGHT', 'DOWN', 'LEFT'];
+const DIR_CHARS = { UP: '↑', RIGHT: '→', DOWN: '↓', LEFT: '←' };
+let   dirIdx    = 0;           // current index into DIRS[]
+ 
+/* Detection timestamps for debounce / double-blink logic */
+let lastBlinkAt   = 0;
+let prevBlinkAt   = 0;
+let lastFistAt    = 0;
+ 
+/* Global counters */
+let totalEvents = 0;
+const t0        = performance.now();   // page load timestamp
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 4 — CHART.JS SETUP
+   ══════════════════════════════════════════════════════════════════════
+   Each channel gets a rolling line chart with a live EMG dataset and
+   a dashed threshold reference line.  animation:false is critical for
+   smooth real-time performance.                                        */
+ 
+const makeZeros = (n) => Array(n).fill(0);
+const labels    = Array(DATA_POINTS).fill('');
+ 
+/* Shared data arrays — pushed to by the data handler */
+const eyeData  = makeZeros(DATA_POINTS);
+const fistData = makeZeros(DATA_POINTS);
+ 
+function buildChart(canvasId, color, data, initThreshold) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   return new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
+        /* Dataset 0 — raw EMG signal */
         {
-          label: 'EMG',
-          data: canvasId === 'eye-chart' ? eyeData : fistData,
-          borderColor: color, borderWidth: 1.5,
-          pointRadius: 0, tension: 0.3,
-          fill: true, backgroundColor: hexToRgba(color, 0.06),
+          data,
+          borderColor:     color,
+          borderWidth:     1.5,
+          backgroundColor: color + '12',
+          pointRadius:     0,
+          tension:         0.35,
+          fill:            true,
         },
+        /* Dataset 1 — threshold reference line (dashed) */
         {
-          label: 'Threshold',
-          data: makeArr(DATA_POINTS, initThreshold),
-          borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1,
-          borderDash: [4,4], pointRadius: 0, tension: 0, fill: false,
+          data:        Array(DATA_POINTS).fill(initThreshold),
+          borderColor: 'rgba(255,255,255,0.13)',
+          borderWidth: 1,
+          borderDash:  [5, 4],
+          pointRadius: 0,
+          tension:     0,
+          fill:        false,
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
+      responsive:          true,
+      maintainAspectRatio: false,
+      animation:           false,   // must be off for real-time
       scales: {
         x: { display: false },
         y: {
           min: 0, max: 1200,
-          grid: { color: 'rgba(255,255,255,0.05)', drawTicks: false },
-          ticks: { color: '#5a5a72', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 5, padding: 6 },
+          grid:   { color: 'rgba(255,255,255,0.04)', drawTicks: false },
+          ticks:  { color: '#4a4a62', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 4, padding: 6 },
           border: { display: false },
         }
       },
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
     }
   });
 }
-
-const eyeChart  = makeChart('eye-chart',  '#3b9eff', 500);
-const fistChart = makeChart('fist-chart', '#ff6b3b', 600);
-
-/* Helper: update the dashed threshold line on a chart */
-function setChartThreshold(chart, value) {
-  chart.data.datasets[1].data = makeArr(DATA_POINTS, value);
+ 
+const eyeChart  = buildChart('eye-chart',  '#38b6ff', eyeData,  500);
+const fistChart = buildChart('fist-chart', '#ff5c38', fistData, 600);
+ 
+/* Helper: move the threshold dashed line on a chart */
+function setThresholdLine(chart, value) {
+  chart.data.datasets[1].data = Array(DATA_POINTS).fill(value);
   chart.update('none');
 }
-
-/* ════════════════════════════════════════════════════════════════════
-   DOM REFS  (IDs match your original HTML exactly)
-   ════════════════════════════════════════════════════════════════════ */
-const eyeValueEl   = document.getElementById('eye-value');
-const fistValueEl  = document.getElementById('fist-value');
-const eyeSlider    = document.getElementById('eyeSlider');    // YOUR ORIGINAL ID
-const fistSlider   = document.getElementById('fistSlider');   // YOUR ORIGINAL ID
-const eyeThreshVal = document.getElementById('eye-thresh-val');
-const fstThreshVal = document.getElementById('fist-thresh-val');
-const latencyEl    = document.getElementById('latency-ms');
-const dirLabelEl   = document.getElementById('dir-label');
-const eventLogEl   = document.getElementById('event-log');
-const eventCountEl = document.getElementById('event-count');
-const runtimeEl    = document.getElementById('runtime');
-const eyeBadge     = document.getElementById('eye-badge');
-const fistBadge    = document.getElementById('fist-badge');
-const dblBadge     = document.getElementById('dbl-badge');
-const statusDot    = document.getElementById('status-dot');
-const statusText   = document.getElementById('status-text');
-const fbSyncDot    = document.getElementById('fb-sync-dot');
-const fbSyncLabel  = document.getElementById('fb-sync-label');
-
-/* ════════════════════════════════════════════════════════════════════
-   ③ FIREBASE REALTIME LISTENERS
-   ════════════════════════════════════════════════════════════════════ */
-if (db) {
-
-  /* ── A. Connection state → status badge ──────────────────────────
-     Firebase exposes a special path .info/connected that is true
-     when the client has an active WebSocket connection to the server.  */
-  firebase.database().ref('.info/connected').on('value', snap => {
-    const online = snap.val() === true;
-    statusDot.classList.toggle('connected', online);
-    statusText.textContent = online ? 'Connected' : 'Disconnected';
-  });
-
-  /* ── B. Read /signals in real time → update charts ───────────────
-     This fires every time the backend (or simulation) writes a new
-     eye / fist value to Firebase. The Chart.js graphs update here.    */
-  db.ref('signals').on('value', snap => {
-    const data = snap.val();
-    if (!data) return;
-
-    const eyeVal  = data.eye  ?? 0;
-    const fistVal = data.fist ?? 0;
-    const t0 = performance.now();
-
-    // Push new sample onto rolling arrays and re-render charts
-    eyeData.shift();  eyeData.push(eyeVal);
-    fistData.shift(); fistData.push(fistVal);
-    eyeChart.update('none');
-    fistChart.update('none');
-
-    // Numeric value displays in panel headers
-    eyeValueEl.textContent  = eyeVal;
-    fistValueEl.textContent = fistVal;
-
-    // Measure round-trip latency (local listener call overhead)
-    latencyEl.textContent = Math.round(performance.now() - t0);
-
-    // Flash the Firebase sync dot in the log header
-    flashFbSync();
-
-    // Run blink / fist detection against current slider values
-    runDetection(eyeVal, fistVal);
-  });
-
-  /* ── C. Read /thresholds → sync sliders ──────────────────────────
-     If another client (e.g., your Python backend, another browser
-     tab, or the Firebase console) writes a threshold, the sliders
-     and chart threshold lines update automatically here.              */
-  db.ref('thresholds').on('value', snap => {
-    const data = snap.val();
-    if (!data) return;
-    if (data.eye  != null) {
-      eyeSlider.value          = data.eye;
-      eyeThreshVal.textContent = data.eye;
-      setChartThreshold(eyeChart, data.eye);
-    }
-    if (data.fist != null) {
-      fistSlider.value         = data.fist;
-      fstThreshVal.textContent = data.fist;
-      setChartThreshold(fistChart, data.fist);
-    }
-  });
-
-  /* ── D. Read /events → real-time log entries ─────────────────────
-     child_added fires for each existing child on attach, then for
-     every new child added afterward. limitToLast(1) means on attach
-     we only get the most recent existing entry (avoids flooding the
-     log with old history), and then we get every new push live.      */
-  db.ref('events').limitToLast(1).on('child_added', snap => {
-    const entry = snap.val();
-    if (entry && entry.time && entry.html) {
-      prependLogRow(entry.time, entry.html);
-    }
-  });
-
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   ④ SLIDER → FIREBASE  (push threshold changes when user moves slider)
-   ════════════════════════════════════════════════════════════════════ */
-eyeSlider.addEventListener('input', () => {
-  const v = +eyeSlider.value;
-  eyeThreshVal.textContent = v;
-  setChartThreshold(eyeChart, v);
-  if (db) db.ref('thresholds/eye').set(v);    // ← write to Firebase
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 5 — DOM ELEMENT REFERENCES
+   ══════════════════════════════════════════════════════════════════════ */
+ 
+const el = (id) => document.getElementById(id);
+ 
+const $eyeVal       = el('eye-val');
+const $fistVal      = el('fist-val');
+const $eyeSlider    = el('eyeSlider');    // matches your original slider IDs
+const $fistSlider   = el('fistSlider');
+const $eyeThrDisp   = el('eye-thr-display');
+const $fistThrDisp  = el('fist-thr-display');
+const $latMs        = el('lat-ms');
+const $dirLabel     = el('dir-label');
+const $logBody      = el('log-body');
+const $evTotal      = el('ev-total');
+const $uptime       = el('uptime-display');
+const $connPill     = el('conn-pill');
+const $connDot      = el('conn-dot');
+const $connLabel    = el('conn-label');
+const $modeBadge    = el('mode-badge');
+const $fbDot        = el('fb-dot');
+const $fbLabel      = el('fb-label');
+const $badgeBlink   = el('badge-blink');
+const $badgeDbl     = el('badge-dbl');
+const $badgeFist    = el('badge-fist');
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 6 — FIREBASE REALTIME LISTENERS
+   ══════════════════════════════════════════════════════════════════════ */
+ 
+/* ── 6a. Connection state → header status pill ──────────────────────
+   Firebase exposes /.info/connected — a special boolean that flips
+   true/false as the WebSocket connection to Firebase is established
+   or lost.  This is the canonical way to show "Connected / Disconnected". */
+onValue(dbRef('.info/connected'), (snap) => {
+  const online = snap.val() === true;
+  $connPill.className  = 'conn-pill ' + (online ? 'online' : 'offline');
+  $connLabel.textContent = online ? 'Connected' : 'Disconnected';
 });
-
-fistSlider.addEventListener('input', () => {
-  const v = +fistSlider.value;
-  fstThreshVal.textContent = v;
-  setChartThreshold(fistChart, v);
-  if (db) db.ref('thresholds/fist').set(v);   // ← write to Firebase
+ 
+/* ── 6b. /signals listener — receives EMG values → updates charts ────
+   ┌─────────────────────────────────────────────────────────────────┐
+   │  ARDUINO INTEGRATION POINT                                       │
+   │  When the Arduino backend is running, it writes to this path:    │
+   │    /signals/eye   <number>   (raw ADC reading, e.g. 0–1023)      │
+   │    /signals/fist  <number>                                       │
+   │  This listener fires every time those values change.             │
+   │  No frontend changes are needed to switch from simulation to     │
+   │  live Arduino data — just stop the simulator and start writing   │
+   │  real readings to Firebase from Python/Node.                     │
+   └─────────────────────────────────────────────────────────────────┘   */
+onValue(dbRef('signals'), (snap) => {
+  const data = snap.val();
+  if (!data) return;
+ 
+  const eyeV  = data.eye  ?? 0;
+  const fistV = data.fist ?? 0;
+  const tStart = performance.now();
+ 
+  /* Roll the chart data arrays — drop oldest, push newest */
+  eyeData.shift();  eyeData.push(eyeV);
+  fistData.shift(); fistData.push(fistV);
+  eyeChart.update('none');
+  fistChart.update('none');
+ 
+  /* Update header value readouts */
+  $eyeVal.textContent  = eyeV;
+  $fistVal.textContent = fistV;
+ 
+  /* Measure listener-call latency */
+  $latMs.textContent = Math.round(performance.now() - tStart);
+ 
+  /* Flash the Firebase sync dot */
+  flashFb();
+ 
+  /* Run blink / fist detection against current slider thresholds */
+  runDetection(eyeV, fistV);
 });
-
-/* ════════════════════════════════════════════════════════════════════
-   DETECTION LOGIC  (same as original + double-blink + Firebase write)
-   ════════════════════════════════════════════════════════════════════ */
-function runDetection(eyeVal, fistVal) {
-  const now        = performance.now();
-  const eyeThresh  = +eyeSlider.value;
-  const fistThresh = +fistSlider.value;
-
-  /* ── Blink detection ──────────────────────────────────────────── */
-  if (eyeVal > eyeThresh && (now - lastBlink) > COOLDOWN_MS) {
-
-    // Double-blink: two spikes within DBL_WINDOW_MS of each other
-    const isDouble = (now - prevBlink) < DBL_WINDOW_MS;
-    prevBlink = lastBlink;
-    lastBlink = now;
-
+ 
+/* ── 6c. /thresholds listener → sync sliders if changed externally ──
+   If another client (a mobile app, Python script, or another browser
+   tab) writes a new threshold to Firebase, the sliders update here.   */
+onValue(dbRef('thresholds'), (snap) => {
+  const data = snap.val();
+  if (!data) return;
+  if (data.eye  != null) {
+    $eyeSlider.value    = data.eye;
+    $eyeThrDisp.textContent = data.eye;
+    setThresholdLine(eyeChart, data.eye);
+  }
+  if (data.fist != null) {
+    $fistSlider.value   = data.fist;
+    $fistThrDisp.textContent = data.fist;
+    setThresholdLine(fistChart, data.fist);
+  }
+});
+ 
+/* ── 6d. /events listener → prepend new log rows in the UI ──────────
+   We use limitToLast(1) on attach so we only receive the single most
+   recent entry that already exists (avoids flooding with old history),
+   then every newly pushed entry fires child_added live.
+ 
+   NOTE: onValue on the whole /events node is simpler for a demo;
+   for production with many entries, prefer child_added + limitToLast. */
+onValue(dbRef('events'), (snap) => {
+  /* We handle individual new entries via the pushEvent() flow below,
+     so this listener is used only for the initial load / sync.
+     Set it up if you want to persist and reload old events on refresh:
+ 
+  const data = snap.val();
+  if (!data) return;
+  const entries = Object.values(data).slice(-10).reverse();
+  entries.forEach(e => prependRow(e.ts, e.html));
+  */
+});
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 7 — SLIDER INPUT HANDLERS  (write thresholds to Firebase)
+   ══════════════════════════════════════════════════════════════════════
+   Every time a slider moves, the new value is:
+     1. Reflected in the adjacent display span
+     2. Written to /thresholds/eye (or /fist) in Firebase
+     3. Reflected in the chart threshold dashed line                    */
+ 
+$eyeSlider.addEventListener('input', () => {
+  const v = Number($eyeSlider.value);
+  $eyeThrDisp.textContent = v;
+  setThresholdLine(eyeChart, v);
+  set(dbRef('thresholds/eye'), v);       // ← Firebase write
+});
+ 
+$fistSlider.addEventListener('input', () => {
+  const v = Number($fistSlider.value);
+  $fistThrDisp.textContent = v;
+  setThresholdLine(fistChart, v);
+  set(dbRef('thresholds/fist'), v);      // ← Firebase write
+});
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 8 — DETECTION LOGIC
+   ══════════════════════════════════════════════════════════════════════
+   Compares incoming EMG values against the current slider thresholds.
+   Emits: Blink, Double Blink, Fist — with debounce to prevent flooding. */
+ 
+function runDetection(eyeV, fistV) {
+  const now      = performance.now();
+  const eyeThr   = Number($eyeSlider.value);
+  const fistThr  = Number($fistSlider.value);
+ 
+  /* ── Blink / Double-blink ────────────────────────────────────── */
+  if (eyeV > eyeThr && (now - lastBlinkAt) > DEBOUNCE_MS) {
+    const isDouble = (now - prevBlinkAt) < DBL_WINDOW_MS;
+    prevBlinkAt = lastBlinkAt;
+    lastBlinkAt = now;
+ 
     if (isDouble) {
-      const html = `<span class="hl-dbl">Double Blink</span> → <span class="hl-dir">Click triggered</span>`;
-      pushEvent(html);
-      flashBadge(dblBadge);
+      /* Double blink detected → click event */
+      pushEvent(
+        `<span class="c-dbl">Double Blink</span>` +
+        ` → <span class="c-dir">Click triggered</span>`
+      );
+      flash($badgeDbl);
     } else {
-      const dir  = cycleDirection();
-      const html = `<span class="hl-eye">Blink detected</span> → Direction changed to <span class="hl-dir">${dir}</span>`;
-      pushEvent(html);
-      flashBadge(eyeBadge);
+      /* Single blink → cycle direction */
+      const dir = cycleDir();
+      pushEvent(
+        `<span class="c-eye">Blink detected</span>` +
+        ` → Direction → <span class="c-dir">${dir}</span>`
+      );
+      flash($badgeBlink);
     }
   }
-
-  /* ── Fist detection ───────────────────────────────────────────── */
-  if (fistVal > fistThresh && (now - lastFist) > COOLDOWN_MS) {
-    lastFist = now;
-    const arrow = DIR_ARROWS[DIRECTIONS[dirIndex]];
-    const html  = `<span class="hl-fist">Fist detected</span> → Cursor move <span class="hl-dir">${arrow}</span>`;
-    pushEvent(html);
-    flashBadge(fistBadge);
+ 
+  /* ── Fist ────────────────────────────────────────────────────── */
+  if (fistV > fistThr && (now - lastFistAt) > DEBOUNCE_MS) {
+    lastFistAt = now;
+    const arrow = DIR_CHARS[DIRS[dirIdx]];
+    pushEvent(
+      `<span class="c-fist">Fist detected</span>` +
+      ` → Cursor move <span class="c-dir">${arrow}</span>`
+    );
+    flash($badgeFist);
   }
 }
-
-function cycleDirection() {
-  dirIndex = (dirIndex + 1) % DIRECTIONS.length;
-  const dir = DIRECTIONS[dirIndex];
-  Object.values(DIR_IDS).forEach(id => document.getElementById(id).classList.remove('active'));
-  document.getElementById(DIR_IDS[dir]).classList.add('active');
-  dirLabelEl.textContent = dir;
+ 
+/* Advance direction state and update UI arrows */
+function cycleDir() {
+  dirIdx = (dirIdx + 1) % DIRS.length;
+  const dir = DIRS[dirIdx];
+ 
+  /* Update arrow highlights */
+  DIRS.forEach(d => el('darr-' + d).classList.remove('active'));
+  el('darr-' + dir).classList.add('active');
+  $dirLabel.textContent = dir;
+ 
   return dir;
 }
-
-/* ════════════════════════════════════════════════════════════════════
-   EVENT LOG HELPERS
-   ════════════════════════════════════════════════════════════════════ */
-
-/*
- * pushEvent(html)
- * ───────────────
- * When Firebase IS configured:
- *   • Writes { time, html } to /events via push() → generates unique key.
- *   • The child_added listener above receives the new entry and calls
- *     prependLogRow() — so the UI update goes through Firebase.
- *
- * When Firebase is NOT configured (local-only mode):
- *   • Calls prependLogRow() directly so the dashboard still works.
- */
-function pushEvent(html) {
-  const time = new Date().toTimeString().slice(0, 8);
-  if (db) {
-    db.ref('events').push({ time, html });
-    /*
-     * Optional: keep the events list from growing forever.
-     * Firebase doesn't auto-truncate; uncomment the line below to
-     * limit stored events to the last 200 (requires Cloud Functions
-     * or a server-side cleanup job for production use).
-     * For a science project, the local limitToLast(1) listener is fine.
-     */
-    // pruneEvents(200);
-  } else {
-    prependLogRow(time, html);
-  }
-}
-
-/* Renders one log row in the UI (called by child_added listener OR directly) */
-function prependLogRow(time, html) {
-  const row = document.createElement('div');
-  row.className = 'log-entry';
-  row.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg">${html}</span>`;
-  eventLogEl.insertBefore(row, eventLogEl.firstChild);
-  eventCountEl.textContent = ++eventCount;
-}
-
-function flashBadge(badge) {
-  badge.classList.add('visible');
-  setTimeout(() => badge.classList.remove('visible'), 700);
-}
-
-/* Briefly lights the green sync dot when Firebase data arrives */
-let _syncTimer;
-function flashFbSync() {
-  fbSyncDot.classList.add('synced');
-  fbSyncLabel.textContent = 'Synced';
-  clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(() => {
-    fbSyncDot.classList.remove('synced');
-    fbSyncLabel.textContent = 'Firebase';
-  }, 400);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   ⑤ EMG SIMULATION  ← replaces the original setInterval data generator
-   ─────────────────────────────────────────────────────────────────
-   What it does:
-     Generates random EMG values locally and writes them to
-     Firebase /signals every 200 ms.  The .on('value') listener
-     above then reads those values back, driving the charts and
-     detection logic — exactly as real Arduino data would.
-
-   How to switch to real Arduino data:
-     1. In your Python backend, read the serial port and write:
-            db.reference('signals').set({'eye': adc_eye, 'fist': adc_fist})
-        (using firebase-admin SDK).
-     2. Comment out or delete the setInterval block below.
-     3. Your Python script becomes the sole writer to /signals.
-   ════════════════════════════════════════════════════════════════════ */
-function generateEMG() {
-  if (Math.random() < SPIKE_CHANCE)
-    return Math.round(SPIKE_MIN + Math.random() * (SPIKE_MAX - SPIKE_MIN));
-  return Math.round(BASE_MIN + Math.random() * (BASE_MAX - BASE_MIN));
-}
-
-setInterval(() => {
-  const eyeVal  = generateEMG();
-  const fistVal = generateEMG();
-
-  if (db) {
-    /* Write to Firebase → the .on('value') listener handles the rest */
-    db.ref('signals').set({ eye: eyeVal, fist: fistVal });
-  } else {
-    /* Local fallback: update charts + detection directly */
-    eyeData.shift();  eyeData.push(eyeVal);
-    fistData.shift(); fistData.push(fistVal);
-    eyeChart.update('none');
-    fistChart.update('none');
-    eyeValueEl.textContent  = eyeVal;
-    fistValueEl.textContent = fistVal;
-    latencyEl.textContent   = 0;
-    runDetection(eyeVal, fistVal);
-  }
-}, UPDATE_MS);
-
-/* ════════════════════════════════════════════════════════════════════
-   SEED DEFAULT THRESHOLDS in Firebase on first-ever page load.
-   Uses a transaction so it only writes if /thresholds doesn't exist yet.
-   ════════════════════════════════════════════════════════════════════ */
-if (db) {
-  db.ref('thresholds').transaction(current => {
-    if (current === null) return { eye: 500, fist: 600 };
-    // Already set by a previous session — leave it as-is.
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 9 — EVENT LOG  (pushes to Firebase + renders in UI)
+   ══════════════════════════════════════════════════════════════════════
+   pushEvent(html) is the single function to call whenever something
+   interesting happens.  It:
+     1. Renders the row in the UI immediately (no round-trip wait)
+     2. Persists the event to Firebase /events so other clients / your
+        Python backend can observe the event log too.                  */
+ 
+function pushEvent(htmlMsg) {
+  const ts = new Date().toTimeString().slice(0, 8);
+ 
+  /* Render in UI immediately */
+  prependRow(ts, htmlMsg);
+ 
+  /* Push to Firebase /events — generates a unique push key */
+  push(dbRef('events'), {
+    ts,
+    html: htmlMsg,
+    created: serverTimestamp()   // server-side timestamp for ordering
   });
 }
-
-/* ════════════════════════════════════════════════════════════════════
-   UPTIME COUNTER  (unchanged from original)
-   ════════════════════════════════════════════════════════════════════ */
+ 
+/* Builds and inserts a single log row at the top of the log */
+function prependRow(ts, html) {
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  row.innerHTML =
+    `<span class="log-ts">[${ts}]</span>` +
+    `<span class="log-txt">${html}</span>`;
+  $logBody.insertBefore(row, $logBody.firstChild);
+  $evTotal.textContent = ++totalEvents;
+}
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 10 — EMG SIMULATION
+   ══════════════════════════════════════════════════════════════════════
+   Generates synthetic EMG values and writes them to Firebase /signals
+   every 200 ms.  The /signals listener (Section 6b) picks them up and
+   drives the charts and detection logic — exactly as real Arduino data
+   would.
+ 
+   ┌─────────────────────────────────────────────────────────────────┐
+   │  TO SWITCH FROM SIMULATION TO REAL ARDUINO DATA:                │
+   │                                                                  │
+   │  1. In your Python backend (firebase-admin SDK):                 │
+   │       db.reference('signals').set({                              │
+   │         'eye':  adc_eye_reading,     # integer 0-1023            │
+   │         'fist': adc_fist_reading     # integer 0-1023            │
+   │       })                                                         │
+   │                                                                  │
+   │  2. Comment out or delete the setInterval block below entirely.  │
+   │     The frontend code needs ZERO changes.                        │
+   │                                                                  │
+   │  3. Optionally call: stopSimulation()                            │
+   │     (exported to window for easy console toggling)               │
+   └─────────────────────────────────────────────────────────────────┘   */
+ 
+/* Generates a single EMG sample — baseline noise + occasional spike */
+function genEMG() {
+  if (Math.random() < SPIKE_CHANCE)
+    return Math.round(SPIKE_LO + Math.random() * (SPIKE_HI - SPIKE_LO));
+  return Math.round(BASE_LO + Math.random() * (BASE_HI - BASE_LO));
+}
+ 
+let simTimer = null;
+ 
+function startSimulation() {
+  if (simTimer) return;   // already running
+  $modeBadge.textContent  = 'SIM';
+  $modeBadge.className    = 'sim';
+  pushEvent(`<span class="c-ok">Simulation started</span> — awaiting Arduino on /signals`);
+ 
+  simTimer = setInterval(() => {
+    const eyeV  = genEMG();
+    const fistV = genEMG();
+ 
+    /* Write to Firebase — the /signals listener handles everything else */
+    set(dbRef('signals'), { eye: eyeV, fist: fistV });
+ 
+  }, UPDATE_MS);
+}
+ 
+function stopSimulation() {
+  if (!simTimer) return;
+  clearInterval(simTimer);
+  simTimer = null;
+  $modeBadge.textContent = 'LIVE';
+  $modeBadge.className   = 'live';
+  pushEvent(`<span class="c-ok">Simulation stopped</span> — reading live Arduino data`);
+}
+ 
+/* Expose to browser console for easy manual toggling during development */
+window.synapseLink = { startSimulation, stopSimulation };
+ 
+/* Start simulation automatically on page load */
+startSimulation();
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 11 — FIREBASE DATABASE STRUCTURE SEED
+   ══════════════════════════════════════════════════════════════════════
+   On the very first page load, write default threshold values only if
+   /thresholds doesn't exist yet.  runTransaction ensures this is
+   atomic and won't overwrite values set by a previous session.        */
+ 
+runTransaction(dbRef('thresholds'), (current) => {
+  if (current === null) {
+    /* First time — seed defaults */
+    return { eye: 500, fist: 600 };
+  }
+  /* Already has values — leave untouched */
+  return current;
+}).then(() => {
+  console.log("[SynapseLink] /thresholds seeded ✓");
+}).catch(console.error);
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 12 — UTILITY HELPERS
+   ══════════════════════════════════════════════════════════════════════ */
+ 
+/* Flash a detection badge briefly */
+function flash(badge) {
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 750);
+}
+ 
+/* Pulse the Firebase sync dot in the log header */
+let fbTimer;
+function flashFb() {
+  $fbDot.classList.add('pulse');
+  $fbLabel.textContent = 'Synced';
+  clearTimeout(fbTimer);
+  fbTimer = setTimeout(() => {
+    $fbDot.classList.remove('pulse');
+    $fbLabel.textContent = 'Firebase';
+  }, 380);
+}
+ 
+/* Uptime counter */
 setInterval(() => {
-  runtimeEl.textContent = `Uptime: ${Math.floor((performance.now() - startTime) / 1000)}s`;
+  const sec = Math.floor((performance.now() - t0) / 1000);
+  const m   = Math.floor(sec / 60).toString().padStart(2, '0');
+  const s   = (sec % 60).toString().padStart(2, '0');
+  $uptime.textContent = `Uptime: ${m}:${s}`;
 }, 1000);
+ 
 </script>
 </body>
 </html>
+ 
