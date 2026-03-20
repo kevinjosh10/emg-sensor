@@ -134,20 +134,6 @@
     }
     .lat-chip b { color: var(--warn); font-weight: 600; }
 
-    /* Mode badge */
-    #mode-badge {
-      font-size: 10px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 3px;
-      border: 1px solid var(--border-hi);
-      color: var(--text-dim);
-      transition: all .3s;
-    }
-    #mode-badge.sim  { border-color: rgba(244,196,48,.3); color: var(--warn); }
-    #mode-badge.live { border-color: rgba(34,201,122,.3); color: var(--ok);   }
-
     /* ── Direction strip ───────────────────────────────────────── */
     #dir-strip {
       display: flex;
@@ -426,9 +412,6 @@
       <span class="tb-sub">EMG Dashboard · Realtime DB</span>
     </div>
     <div class="tb-right">
-      <!-- Mode badge: SIM or LIVE -->
-      <span id="mode-badge" class="sim">SIM</span>
-
       <!-- Firebase connection status -->
       <div class="conn-pill offline" id="conn-pill">
         <div class="conn-dot" id="conn-dot"></div>
@@ -608,12 +591,6 @@ console.log("[SynapseLink] Firebase initialised ✓  project:", firebaseConfig.p
    ══════════════════════════════════════════════════════════════════════ */
 
 const DATA_POINTS   = 60;      // samples visible in each rolling chart
-const UPDATE_MS     = 200;     // simulation tick interval (ms)
-const SPIKE_CHANCE  = 0.08;    // probability of a spike per tick
-const SPIKE_LO      = 700;     // spike amplitude lower bound (μV)
-const SPIKE_HI      = 1100;    // spike amplitude upper bound (μV)
-const BASE_LO       = 40;      // baseline noise lower bound (μV)
-const BASE_HI       = 280;     // baseline noise upper bound (μV)
 const DEBOUNCE_MS   = 800;     // minimum gap between same-type detections
 const DBL_WINDOW_MS = 550;     // two blinks within this → double-blink
 
@@ -723,7 +700,6 @@ const $uptime       = el('uptime-display');
 const $connPill     = el('conn-pill');
 const $connDot      = el('conn-dot');
 const $connLabel    = el('conn-label');
-const $modeBadge    = el('mode-badge');
 const $fbDot        = el('fb-dot');
 const $fbLabel      = el('fb-label');
 const $badgeBlink   = el('badge-blink');
@@ -942,75 +918,10 @@ function prependRow(ts, html) {
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 10 — EMG SIMULATION
-   ══════════════════════════════════════════════════════════════════════
-   Generates synthetic EMG values and writes them to Firebase /signals
-   every 200 ms.  The /signals listener (Section 6b) picks them up and
-   drives the charts and detection logic — exactly as real Arduino data
-   would.
-
-   ┌─────────────────────────────────────────────────────────────────┐
-   │  TO SWITCH FROM SIMULATION TO REAL ARDUINO DATA:                │
-   │                                                                  │
-   │  1. In your Python backend (firebase-admin SDK):                 │
-   │       db.reference('signals').set({                              │
-   │         'eye':  adc_eye_reading,     # integer 0-1023            │
-   │         'fist': adc_fist_reading     # integer 0-1023            │
-   │       })                                                         │
-   │                                                                  │
-   │  2. Comment out or delete the setInterval block below entirely.  │
-   │     The frontend code needs ZERO changes.                        │
-   │                                                                  │
-   │  3. Optionally call: stopSimulation()                            │
-   │     (exported to window for easy console toggling)               │
-   └─────────────────────────────────────────────────────────────────┘   */
-
-/* Generates a single EMG sample — baseline noise + occasional spike */
-function genEMG() {
-  if (Math.random() < SPIKE_CHANCE)
-    return Math.round(SPIKE_LO + Math.random() * (SPIKE_HI - SPIKE_LO));
-  return Math.round(BASE_LO + Math.random() * (BASE_HI - BASE_LO));
-}
-
-let simTimer = null;
-
-function startSimulation() {
-  if (simTimer) return;   // already running
-  $modeBadge.textContent  = 'SIM';
-  $modeBadge.className    = 'sim';
-  pushEvent(`<span class="c-ok">Simulation started</span> — awaiting Arduino on /signals`);
-
-  simTimer = setInterval(() => {
-    const eyeV  = genEMG();
-    const fistV = genEMG();
-
-    /* Write to Firebase — the /signals listener handles everything else */
-    set(dbRef('signals'), { eye: eyeV, fist: fistV });
-
-  }, UPDATE_MS);
-}
-
-function stopSimulation() {
-  if (!simTimer) return;
-  clearInterval(simTimer);
-  simTimer = null;
-  $modeBadge.textContent = 'LIVE';
-  $modeBadge.className   = 'live';
-  pushEvent(`<span class="c-ok">Simulation stopped</span> — reading live Arduino data`);
-}
-
-/* Expose to browser console for easy manual toggling during development */
-window.synapseLink = { startSimulation, stopSimulation };
-
-/* Start simulation automatically on page load */
-startSimulation();
-
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 11 — FIREBASE DATABASE STRUCTURE SEED
+   SECTION 10 — FIREBASE DATABASE STRUCTURE SEED
    ══════════════════════════════════════════════════════════════════════
    On the very first page load, write default threshold values only if
-   /thresholds doesn't exist yet.  runTransaction ensures this is
+   /thresholds doesn't exist yet. runTransaction ensures this is
    atomic and won't overwrite values set by a previous session.        */
 
 runTransaction(dbRef('thresholds'), (current) => {
