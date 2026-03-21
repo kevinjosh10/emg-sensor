@@ -32,7 +32,7 @@
   />
 
   <!-- ═══════════════════════════════════════════════════════════════
-       STYLES
+       STYLES — UNCHANGED
        ═══════════════════════════════════════════════════════════════ -->
   <style>
     /* ── Design tokens ─────────────────────────────────────────── */
@@ -45,22 +45,20 @@
       --text:         #c8c8d8;
       --text-dim:     #4a4a62;
       --text-muted:   #6b6b88;
-      --eye:          #38b6ff;      /* blue  — eye / blink channel  */
-      --fist:         #ff5c38;      /* orange — fist channel         */
-      --ok:           #22c97a;      /* green  — connected / ok       */
-      --warn:         #f4c430;      /* yellow — events / direction   */
-      --err:          #ff3b3b;      /* red    — disconnected         */
-      --dbl:          #c07fff;      /* violet — double-blink         */
+      --eye:          #38b6ff;
+      --fist:         #ff5c38;
+      --ok:           #22c97a;
+      --warn:         #f4c430;
+      --err:          #ff3b3b;
+      --dbl:          #c07fff;
       --mono:         'JetBrains Mono', monospace;
       --display:      'Syne', sans-serif;
     }
 
-    /* ── Reset ─────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; line-height: 1.55; }
     button { font-family: inherit; }
 
-    /* ── App shell ─────────────────────────────────────────────── */
     #app {
       display: grid;
       grid-template-rows: auto auto 1fr auto;
@@ -80,118 +78,49 @@
       top: 0;
       z-index: 10;
     }
-    .tb-left {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-    }
-    .tb-title {
-      font-family: var(--display);
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      color: #fff;
-    }
-    .tb-sub {
-      font-size: 10px;
-      color: var(--text-dim);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .tb-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
+    .tb-left { display: flex; align-items: baseline; gap: 12px; }
+    .tb-title { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: 0.02em; color: #fff; }
+    .tb-sub { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+    .tb-right { display: flex; align-items: center; gap: 20px; }
 
-    /* Connection pill */
     .conn-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
       transition: border-color .3s, color .3s;
     }
     .conn-pill.online  { border-color: rgba(34,201,122,.35); color: var(--ok); }
     .conn-pill.offline { border-color: rgba(255,59,59,.25);  color: var(--err); }
-    .conn-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--err);
-      transition: background .3s, box-shadow .3s;
-    }
-    .conn-pill.online  .conn-dot { background: var(--ok);  box-shadow: 0 0 5px var(--ok); }
+    .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--err); transition: background .3s, box-shadow .3s; }
+    .conn-pill.online  .conn-dot { background: var(--ok); box-shadow: 0 0 5px var(--ok); }
     .conn-pill.offline .conn-dot { background: var(--err); }
 
-    /* Latency chip */
-    .lat-chip {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
+    .lat-chip { font-size: 11px; color: var(--text-muted); }
     .lat-chip b { color: var(--warn); font-weight: 600; }
 
     /* ── Direction strip ───────────────────────────────────────── */
     #dir-strip {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 8px 24px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+      padding: 8px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
     }
-    .ds-label {
-      font-size: 10px;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-    .dir-arrows {
-      display: flex;
-      gap: 6px;
-    }
+    .ds-label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); }
+    .dir-arrows { display: flex; gap: 6px; }
     .dir-btn {
       width: 28px; height: 28px;
       display: flex; align-items: center; justify-content: center;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--text-dim);
-      transition: all .15s;
+      border-radius: 4px; border: 1px solid var(--border);
+      font-size: 13px; color: var(--text-dim); transition: all .15s;
     }
-    .dir-btn.active {
-      background: rgba(56,182,255,.1);
-      border-color: rgba(56,182,255,.5);
-      color: var(--eye);
-    }
-    .ds-text {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-left: auto;
-    }
+    .dir-btn.active { background: rgba(56,182,255,.1); border-color: rgba(56,182,255,.5); color: var(--eye); }
+    .ds-text { font-size: 11px; color: var(--text-muted); margin-left: auto; }
     .ds-text strong { color: var(--eye); }
 
-    /* Detection badges in strip */
-    .det-badges {
-      display: flex;
-      gap: 8px;
-    }
+    .det-badges { display: flex; gap: 8px; }
     .det-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 9px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      opacity: 0;
-      transition: opacity .15s;
-      pointer-events: none;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 3px; font-size: 10px; font-weight: 500;
+      letter-spacing: .05em; text-transform: uppercase;
+      opacity: 0; transition: opacity .15s; pointer-events: none;
     }
     .det-badge.show { opacity: 1; }
     .det-badge.b-eye  { background: rgba(56,182,255,.12);  color: var(--eye);  border: 1px solid rgba(56,182,255,.3); }
@@ -199,186 +128,71 @@
     .det-badge.b-dbl  { background: rgba(192,127,255,.12); color: var(--dbl);  border: 1px solid rgba(192,127,255,.3); }
 
     /* ── Main grid ─────────────────────────────────────────────── */
-    #main {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 16px 24px;
-      overflow-y: auto;
-    }
-
-    /* Signal panels side-by-side */
-    .panel-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
+    #main { display: flex; flex-direction: column; gap: 16px; padding: 16px 24px; overflow-y: auto; }
+    .panel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
     /* ── Signal panel card ─────────────────────────────────────── */
-    .sig-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-    }
+    .sig-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     .sc-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
     }
-    .sc-title {
-      font-family: var(--display);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
+    .sc-title { font-family: var(--display); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
     .sc-title.eye-col  { color: var(--eye); }
     .sc-title.fist-col { color: var(--fist); }
-    .sc-live {
-      display: flex;
-      align-items: baseline;
-      gap: 5px;
-    }
-    .sc-val {
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1;
-    }
+    .sc-live { display: flex; align-items: baseline; gap: 5px; }
+    .sc-val { font-size: 22px; font-weight: 600; line-height: 1; }
     .sc-val.eye-col  { color: var(--eye); }
     .sc-val.fist-col { color: var(--fist); }
-    .sc-unit {
-      font-size: 9px;
-      color: var(--text-dim);
-      letter-spacing: .06em;
-    }
+    .sc-unit { font-size: 9px; color: var(--text-dim); letter-spacing: .06em; }
 
-    /* Chart area */
-    .sc-chart {
-      padding: 10px 14px 6px;
-      height: 190px;
-      position: relative;
-    }
+    .sc-chart { padding: 10px 14px 6px; height: 190px; position: relative; }
     .sc-chart canvas { display: block; }
 
-    /* Threshold row */
     .sc-thresh {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 14px 12px;
-      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px 12px; border-top: 1px solid var(--border);
     }
-    .thr-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--text-dim);
-      min-width: 95px;
-    }
+    .thr-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); min-width: 95px; }
     input[type="range"] {
-      flex: 1;
-      -webkit-appearance: none;
-      appearance: none;
-      height: 2px;
-      border-radius: 2px;
-      background: var(--border-hi);
-      outline: none;
-      cursor: pointer;
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 2px; border-radius: 2px; background: var(--border-hi); outline: none; cursor: pointer;
     }
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: transform .1s;
+      -webkit-appearance: none; appearance: none;
+      width: 13px; height: 13px; border-radius: 50%; cursor: pointer; transition: transform .1s;
     }
     input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.3); }
     .eye-range::-webkit-slider-thumb  { background: var(--eye);  }
     .fist-range::-webkit-slider-thumb { background: var(--fist); }
-    .thr-val {
-      font-size: 11px;
-      min-width: 32px;
-      text-align: right;
-    }
+    .thr-val { font-size: 11px; min-width: 32px; text-align: right; }
     .thr-val.eye-col  { color: var(--eye); }
     .thr-val.fist-col { color: var(--fist); }
 
     /* ── Event log ─────────────────────────────────────────────── */
-    .log-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-    }
+    .log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     .lc-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 9px 14px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
     }
-    .lc-title {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      color: var(--text-muted);
-    }
-    .lc-meta {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    /* Firebase sync dot in log header */
-    .fb-sync {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10px;
-      color: var(--text-dim);
-    }
-    .fb-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--text-dim);
-      transition: background .25s, box-shadow .25s;
-    }
+    .lc-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
+    .lc-meta { display: flex; align-items: center; gap: 14px; }
+    .fb-sync { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-dim); }
+    .fb-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim); transition: background .25s, box-shadow .25s; }
     .fb-dot.pulse { background: var(--ok); box-shadow: 0 0 5px var(--ok); }
-    .ev-count {
-      font-size: 10px;
-      color: var(--text-dim);
-    }
+    .ev-count { font-size: 10px; color: var(--text-dim); }
     .ev-count b { color: var(--text-muted); }
 
-    /* Log body */
-    #log-body {
-      height: 150px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-    }
+    #log-body { height: 150px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
     #log-body::-webkit-scrollbar       { width: 3px; }
     #log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     .log-row {
-      display: grid;
-      grid-template-columns: 74px 1fr;
-      gap: 8px;
-      padding: 3px 14px;
-      font-size: 11px;
-      line-height: 1.7;
-      animation: slideIn .18s ease;
+      display: grid; grid-template-columns: 74px 1fr; gap: 8px;
+      padding: 3px 14px; font-size: 11px; line-height: 1.7; animation: slideIn .18s ease;
     }
     .log-row:hover { background: rgba(255,255,255,.02); }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-5px); }
-      to   { opacity: 1; transform: none; }
-    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
     .log-ts  { color: var(--text-dim); }
     .log-txt { color: var(--text); }
     .log-txt .c-eye  { color: var(--eye); }
@@ -390,12 +204,8 @@
 
     /* ── Footer ────────────────────────────────────────────────── */
     #footer {
-      padding: 8px 24px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--text-dim);
+      padding: 8px 24px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim);
     }
   </style>
 </head>
@@ -404,7 +214,7 @@
 <div id="app">
 
   <!-- ══════════════════════════════════════════════════════════════
-       TOP BAR
+       TOP BAR — UNCHANGED
        ══════════════════════════════════════════════════════════════ -->
   <header id="topbar">
     <div class="tb-left">
@@ -412,49 +222,40 @@
       <span class="tb-sub">EMG Dashboard · Realtime DB</span>
     </div>
     <div class="tb-right">
-      <!-- Firebase connection status -->
       <div class="conn-pill offline" id="conn-pill">
         <div class="conn-dot" id="conn-dot"></div>
         <span id="conn-label">Connecting…</span>
       </div>
-
-      <!-- Round-trip latency -->
       <div class="lat-chip">Latency: <b id="lat-ms">—</b> ms</div>
     </div>
   </header>
 
   <!-- ══════════════════════════════════════════════════════════════
-       DIRECTION + DETECTION STRIP
+       DIRECTION + DETECTION STRIP — UNCHANGED
        ══════════════════════════════════════════════════════════════ -->
   <div id="dir-strip">
     <span class="ds-label">Direction</span>
-
-    <!-- Arrow buttons — active class toggled by JS -->
     <div class="dir-arrows">
       <div class="dir-btn active" id="darr-UP">↑</div>
       <div class="dir-btn"        id="darr-RIGHT">→</div>
       <div class="dir-btn"        id="darr-DOWN">↓</div>
       <div class="dir-btn"        id="darr-LEFT">←</div>
     </div>
-
-    <!-- Detection event badges -->
     <div class="det-badges">
       <span class="det-badge b-eye"  id="badge-blink">● Blink</span>
       <span class="det-badge b-dbl"  id="badge-dbl">● Dbl Blink</span>
       <span class="det-badge b-fist" id="badge-fist">● Fist</span>
     </div>
-
     <div class="ds-text">Current: <strong id="dir-label">UP</strong></div>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════
-       MAIN CONTENT
+       MAIN CONTENT — UNCHANGED
        ══════════════════════════════════════════════════════════════ -->
   <main id="main">
-
     <div class="panel-row">
 
-      <!-- ── Eye EMG Card ─────────────────────────────────────── -->
+      <!-- Eye EMG Card -->
       <div class="sig-card">
         <div class="sc-head">
           <span class="sc-title eye-col">Eye EMG Signal</span>
@@ -468,16 +269,13 @@
         </div>
         <div class="sc-thresh">
           <span class="thr-label">Eye Threshold</span>
-          <!--
-            id="eyeSlider" — writes to Firebase /thresholds/eye on input
-          -->
           <input type="range" class="eye-range" id="eyeSlider"
                  min="100" max="1000" value="500" step="10" />
           <span class="thr-val eye-col" id="eye-thr-display">500</span>
         </div>
       </div>
 
-      <!-- ── Fist EMG Card ─────────────────────────────────────── -->
+      <!-- Fist EMG Card -->
       <div class="sig-card">
         <div class="sc-head">
           <span class="sc-title fist-col">Fist EMG Signal</span>
@@ -491,9 +289,6 @@
         </div>
         <div class="sc-thresh">
           <span class="thr-label">Fist Threshold</span>
-          <!--
-            id="fistSlider" — writes to Firebase /thresholds/fist on input
-          -->
           <input type="range" class="fist-range" id="fistSlider"
                  min="100" max="1000" value="600" step="10" />
           <span class="thr-val fist-col" id="fist-thr-display">600</span>
@@ -502,12 +297,11 @@
 
     </div><!-- /.panel-row -->
 
-    <!-- ── Event Log ─────────────────────────────────────────────── -->
+    <!-- Event Log -->
     <div class="log-card">
       <div class="lc-head">
         <span class="lc-title">Event Log</span>
         <div class="lc-meta">
-          <!-- Firebase sync flash indicator -->
           <div class="fb-sync">
             <div class="fb-dot" id="fb-dot"></div>
             <span id="fb-label">Firebase</span>
@@ -515,14 +309,13 @@
           <div class="ev-count">Events: <b id="ev-total">0</b></div>
         </div>
       </div>
-      <!-- Log entries are prepended here in real time -->
       <div id="log-body"></div>
     </div>
 
-  </main><!-- /#main -->
+  </main>
 
   <!-- ══════════════════════════════════════════════════════════════
-       FOOTER
+       FOOTER — UNCHANGED
        ══════════════════════════════════════════════════════════════ -->
   <footer id="footer">
     <span>SynapseLink · synapselink-6c405 · Firebase RTDB</span>
@@ -532,20 +325,13 @@
 </div><!-- /#app -->
 
 
-<!-- ════════════════════════════════════════════════════════════════════
-     MAIN SCRIPT  (type="module" — required for Firebase modular SDK)
-     ════════════════════════════════════════════════════════════════════ -->
 <script type="module">
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 1 — FIREBASE IMPORTS (Modular SDK v10)
-   ══════════════════════════════════════════════════════════════════════
-   The modular SDK is tree-shakeable and uses ES module imports.
-   We load it directly from the Firebase CDN — no npm or bundler needed.
-   Only import what you actually use to keep the bundle lean.           */
-
-import { initializeApp }                    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAnalytics }                     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+   SECTION 1 — FIREBASE IMPORTS  ← UNCHANGED
+   ══════════════════════════════════════════════════════════════════════ */
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAnalytics }    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import {
   getDatabase,
   ref,
@@ -558,12 +344,8 @@ import {
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 2 — FIREBASE CONFIGURATION & INITIALISATION
-   ══════════════════════════════════════════════════════════════════════
-   Your real project credentials. These are safe to expose in a
-   frontend — Firebase security is enforced via Database Rules, not
-   by hiding the config.                                                */
-
+   SECTION 2 — FIREBASE CONFIG  ← UNCHANGED
+   ══════════════════════════════════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey:            "AIzaSyAlVijQ9VdYxLUVujMsg1B1II8Ehj0PpLw",
   authDomain:        "synapselink-6c405.firebaseapp.com",
@@ -575,51 +357,47 @@ const firebaseConfig = {
   measurementId:     "G-ZL5234GQNC"
 };
 
-/* Initialise Firebase app + services */
 const app       = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db        = getDatabase(app);
-
-/* Convenience: shorthand to get a database ref by path */
-const dbRef = (path) => ref(db, path);
+const dbRef     = (path) => ref(db, path);
 
 console.log("[SynapseLink] Firebase initialised ✓  project:", firebaseConfig.projectId);
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 3 — DASHBOARD CONSTANTS & STATE
+   SECTION 3 — CONSTANTS & STATE
    ══════════════════════════════════════════════════════════════════════ */
+const DATA_POINTS   = 60;
+const DEBOUNCE_MS   = 800;
+const DBL_WINDOW_MS = 550;
 
-const DATA_POINTS   = 60;      // samples visible in each rolling chart
-const DEBOUNCE_MS   = 800;     // minimum gap between same-type detections
-const DBL_WINDOW_MS = 550;     // two blinks within this → double-blink
-
-/* Direction state machine */
 const DIRS      = ['UP', 'RIGHT', 'DOWN', 'LEFT'];
 const DIR_CHARS = { UP: '↑', RIGHT: '→', DOWN: '↓', LEFT: '←' };
-let   dirIdx    = 0;           // current index into DIRS[]
 
-/* Detection timestamps for debounce / double-blink logic */
-let lastBlinkAt   = 0;
-let prevBlinkAt   = 0;
-let lastFistAt    = 0;
+// ─── DIRECTION CHANGE ────────────────────────────────────────────────
+// ❌ REMOVED:  let dirIdx = 0;
+//    dirIdx drove cycleDir() which locally computed direction — no longer needed.
+//
+// ✅ ADDED: currentDir mirrors /direction from Firebase.
+//    Python is the sole writer; JS only reads this value.
+let currentDir = 'UP';
+// ─────────────────────────────────────────────────────────────────────
 
-/* Global counters */
+let lastBlinkAt = 0;
+let prevBlinkAt = 0;
+let lastFistAt  = 0;
+
 let totalEvents = 0;
-const t0        = performance.now();   // page load timestamp
+const t0        = performance.now();
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 4 — CHART.JS SETUP
-   ══════════════════════════════════════════════════════════════════════
-   Each channel gets a rolling line chart with a live EMG dataset and
-   a dashed threshold reference line.  animation:false is critical for
-   smooth real-time performance.                                        */
-
+   SECTION 4 — CHART.JS SETUP  ← UNCHANGED
+   ══════════════════════════════════════════════════════════════════════ */
 const makeZeros = (n) => Array(n).fill(0);
 const labels    = Array(DATA_POINTS).fill('');
 
-/* Shared data arrays — pushed to by the data handler */
 const eyeData  = makeZeros(DATA_POINTS);
 const fistData = makeZeros(DATA_POINTS);
 
@@ -630,7 +408,6 @@ function buildChart(canvasId, color, data, initThreshold) {
     data: {
       labels,
       datasets: [
-        /* Dataset 0 — raw EMG signal */
         {
           data,
           borderColor:     color,
@@ -640,7 +417,6 @@ function buildChart(canvasId, color, data, initThreshold) {
           tension:         0.35,
           fill:            true,
         },
-        /* Dataset 1 — threshold reference line (dashed) */
         {
           data:        Array(DATA_POINTS).fill(initThreshold),
           borderColor: 'rgba(255,255,255,0.13)',
@@ -655,7 +431,7 @@ function buildChart(canvasId, color, data, initThreshold) {
     options: {
       responsive:          true,
       maintainAspectRatio: false,
-      animation:           false,   // must be off for real-time
+      animation:           false,
       scales: {
         x: { display: false },
         y: {
@@ -673,7 +449,6 @@ function buildChart(canvasId, color, data, initThreshold) {
 const eyeChart  = buildChart('eye-chart',  '#38b6ff', eyeData,  500);
 const fistChart = buildChart('fist-chart', '#ff5c38', fistData, 600);
 
-/* Helper: move the threshold dashed line on a chart */
 function setThresholdLine(chart, value) {
   chart.data.datasets[1].data = Array(DATA_POINTS).fill(value);
   chart.update('none');
@@ -681,57 +456,43 @@ function setThresholdLine(chart, value) {
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 5 — DOM ELEMENT REFERENCES
+   SECTION 5 — DOM REFS  ← UNCHANGED
    ══════════════════════════════════════════════════════════════════════ */
-
 const el = (id) => document.getElementById(id);
 
-const $eyeVal       = el('eye-val');
-const $fistVal      = el('fist-val');
-const $eyeSlider    = el('eyeSlider');    // matches your original slider IDs
-const $fistSlider   = el('fistSlider');
-const $eyeThrDisp   = el('eye-thr-display');
-const $fistThrDisp  = el('fist-thr-display');
-const $latMs        = el('lat-ms');
-const $dirLabel     = el('dir-label');
-const $logBody      = el('log-body');
-const $evTotal      = el('ev-total');
-const $uptime       = el('uptime-display');
-const $connPill     = el('conn-pill');
-const $connDot      = el('conn-dot');
-const $connLabel    = el('conn-label');
-const $fbDot        = el('fb-dot');
-const $fbLabel      = el('fb-label');
-const $badgeBlink   = el('badge-blink');
-const $badgeDbl     = el('badge-dbl');
-const $badgeFist    = el('badge-fist');
+const $eyeVal      = el('eye-val');
+const $fistVal     = el('fist-val');
+const $eyeSlider   = el('eyeSlider');
+const $fistSlider  = el('fistSlider');
+const $eyeThrDisp  = el('eye-thr-display');
+const $fistThrDisp = el('fist-thr-display');
+const $latMs       = el('lat-ms');
+const $dirLabel    = el('dir-label');
+const $logBody     = el('log-body');
+const $evTotal     = el('ev-total');
+const $uptime      = el('uptime-display');
+const $connPill    = el('conn-pill');
+const $connDot     = el('conn-dot');
+const $connLabel   = el('conn-label');
+const $fbDot       = el('fb-dot');
+const $fbLabel     = el('fb-label');
+const $badgeBlink  = el('badge-blink');
+const $badgeDbl    = el('badge-dbl');
+const $badgeFist   = el('badge-fist');
 
 
 /* ══════════════════════════════════════════════════════════════════════
    SECTION 6 — FIREBASE REALTIME LISTENERS
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── 6a. Connection state → header status pill ──────────────────────
-   Firebase exposes /.info/connected — a special boolean that flips
-   true/false as the WebSocket connection to Firebase is established
-   or lost.  This is the canonical way to show "Connected / Disconnected". */
+/* ── 6a. Connection state  ← UNCHANGED ─────────────────────────────── */
 onValue(dbRef('.info/connected'), (snap) => {
   const online = snap.val() === true;
-  $connPill.className  = 'conn-pill ' + (online ? 'online' : 'offline');
+  $connPill.className    = 'conn-pill ' + (online ? 'online' : 'offline');
   $connLabel.textContent = online ? 'Connected' : 'Disconnected';
 });
 
-/* ── 6b. /signals listener — receives EMG values → updates charts ────
-   ┌─────────────────────────────────────────────────────────────────┐
-   │  ARDUINO INTEGRATION POINT                                       │
-   │  When the Arduino backend is running, it writes to this path:    │
-   │    /signals/eye   <number>   (raw ADC reading, e.g. 0–1023)      │
-   │    /signals/fist  <number>                                       │
-   │  This listener fires every time those values change.             │
-   │  No frontend changes are needed to switch from simulation to     │
-   │  live Arduino data — just stop the simulator and start writing   │
-   │  real readings to Firebase from Python/Node.                     │
-   └─────────────────────────────────────────────────────────────────┘   */
+/* ── 6b. /signals  ← UNCHANGED ─────────────────────────────────────── */
 onValue(dbRef('signals'), (snap) => {
   const data = snap.val();
   if (!data) return;
@@ -740,126 +501,130 @@ onValue(dbRef('signals'), (snap) => {
   const fistV = data.fist ?? 0;
   const tStart = performance.now();
 
-  /* Roll the chart data arrays — drop oldest, push newest */
   eyeData.shift();  eyeData.push(eyeV);
   fistData.shift(); fistData.push(fistV);
   eyeChart.update('none');
   fistChart.update('none');
 
-  /* Update header value readouts */
   $eyeVal.textContent  = eyeV;
   $fistVal.textContent = fistV;
+  $latMs.textContent   = Math.round(performance.now() - tStart);
 
-  /* Measure listener-call latency */
-  $latMs.textContent = Math.round(performance.now() - tStart);
-
-  /* Flash the Firebase sync dot */
   flashFb();
-
-  /* Run blink / fist detection against current slider thresholds */
   runDetection(eyeV, fistV);
 });
 
-/* ── 6c. /thresholds listener → sync sliders if changed externally ──
-   If another client (a mobile app, Python script, or another browser
-   tab) writes a new threshold to Firebase, the sliders update here.   */
+/* ── 6c. /thresholds  ← UNCHANGED ──────────────────────────────────── */
 onValue(dbRef('thresholds'), (snap) => {
   const data = snap.val();
   if (!data) return;
   if (data.eye  != null) {
-    $eyeSlider.value    = data.eye;
-    $eyeThrDisp.textContent = data.eye;
+    $eyeSlider.value         = data.eye;
+    $eyeThrDisp.textContent  = data.eye;
     setThresholdLine(eyeChart, data.eye);
   }
   if (data.fist != null) {
-    $fistSlider.value   = data.fist;
+    $fistSlider.value        = data.fist;
     $fistThrDisp.textContent = data.fist;
     setThresholdLine(fistChart, data.fist);
   }
 });
 
-/* ── 6d. /events listener → prepend new log rows in the UI ──────────
-   We use limitToLast(1) on attach so we only receive the single most
-   recent entry that already exists (avoids flooding with old history),
-   then every newly pushed entry fires child_added live.
-
-   NOTE: onValue on the whole /events node is simpler for a demo;
-   for production with many entries, prefer child_added + limitToLast. */
+/* ── 6d. /events  ← UNCHANGED ──────────────────────────────────────── */
 onValue(dbRef('events'), (snap) => {
-  /* We handle individual new entries via the pushEvent() flow below,
-     so this listener is used only for the initial load / sync.
-     Set it up if you want to persist and reload old events on refresh:
+  /* individual entries handled via pushEvent() below */
+});
 
-  const data = snap.val();
-  if (!data) return;
-  const entries = Object.values(data).slice(-10).reverse();
-  entries.forEach(e => prependRow(e.ts, e.html));
-  */
+/* ── 6e. /direction  ← NEW ─────────────────────────────────────────────
+   Python backend writes one of: "UP" | "RIGHT" | "DOWN" | "LEFT"
+   The dashboard only READS this path — it never writes back.
+   This replaces all internal direction-cycling logic.                   */
+onValue(dbRef('direction'), (snap) => {
+  const dir = snap.val();
+
+  // Ignore null or any value that isn't a recognised direction
+  if (!dir || !DIR_CHARS[dir]) return;
+
+  // Keep currentDir in sync so fist log messages show the correct arrow
+  currentDir = dir;
+
+  // Update the text label  (id="dir-label")
+  $dirLabel.textContent = dir;
+
+  // Remove active from all four arrows, then set only the matching one
+  DIRS.forEach(d => el('darr-' + d).classList.remove('active'));
+  el('darr-' + dir).classList.add('active');
 });
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 7 — SLIDER INPUT HANDLERS  (write thresholds to Firebase)
-   ══════════════════════════════════════════════════════════════════════
-   Every time a slider moves, the new value is:
-     1. Reflected in the adjacent display span
-     2. Written to /thresholds/eye (or /fist) in Firebase
-     3. Reflected in the chart threshold dashed line                    */
-
+   SECTION 7 — SLIDER HANDLERS  ← UNCHANGED
+   ══════════════════════════════════════════════════════════════════════ */
 $eyeSlider.addEventListener('input', () => {
   const v = Number($eyeSlider.value);
   $eyeThrDisp.textContent = v;
   setThresholdLine(eyeChart, v);
-  set(dbRef('thresholds/eye'), v);       // ← Firebase write
+  set(dbRef('thresholds/eye'), v);
 });
 
 $fistSlider.addEventListener('input', () => {
   const v = Number($fistSlider.value);
   $fistThrDisp.textContent = v;
   setThresholdLine(fistChart, v);
-  set(dbRef('thresholds/fist'), v);      // ← Firebase write
+  set(dbRef('thresholds/fist'), v);
 });
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 8 — DETECTION LOGIC
+   SECTION 8 — DETECTION LOGIC  ← PARTIALLY CHANGED
    ══════════════════════════════════════════════════════════════════════
-   Compares incoming EMG values against the current slider thresholds.
-   Emits: Blink, Double Blink, Fist — with debounce to prevent flooding. */
+   WHAT CHANGED:
+   • Single blink branch: cycleDir() call removed — direction comes from
+     Firebase now, so we just log the blink event.
+   • Fist branch: replaced DIRS[dirIdx] with currentDir so the log
+     message always matches what Python/Firebase says the direction is.
+   • cycleDir() is now a no-op stub (safe if called anywhere by mistake).
+   WHAT IS UNCHANGED:
+   • Debounce logic, double-blink window, badge flashing — all identical. */
 
 function runDetection(eyeV, fistV) {
-  const now      = performance.now();
-  const eyeThr   = Number($eyeSlider.value);
-  const fistThr  = Number($fistSlider.value);
+  const now     = performance.now();
+  const eyeThr  = Number($eyeSlider.value);
+  const fistThr = Number($fistSlider.value);
 
-  /* ── Blink / Double-blink ────────────────────────────────────── */
+  /* ── Blink / Double-blink ─────────────────────────────────────── */
   if (eyeV > eyeThr && (now - lastBlinkAt) > DEBOUNCE_MS) {
     const isDouble = (now - prevBlinkAt) < DBL_WINDOW_MS;
     prevBlinkAt = lastBlinkAt;
     lastBlinkAt = now;
 
     if (isDouble) {
-      /* Double blink detected → click event */
+      // Double blink → click event  (unchanged)
       pushEvent(
         `<span class="c-dbl">Double Blink</span>` +
         ` → <span class="c-dir">Click triggered</span>`
       );
       flash($badgeDbl);
     } else {
-      /* Single blink → cycle direction */
-      const dir = cycleDir();
+      // Single blink detected.
+      // ❌ REMOVED: const dir = cycleDir();
+      //    cycleDir() locally mutated direction — direction is now Firebase-only.
+      // ✅ Just log the event; the /direction listener updates the UI when
+      //    Python writes the new direction to Firebase.
       pushEvent(
         `<span class="c-eye">Blink detected</span>` +
-        ` → Direction → <span class="c-dir">${dir}</span>`
+        ` → <span class="c-dir">Direction from Firebase</span>`
       );
       flash($badgeBlink);
     }
   }
 
-  /* ── Fist ────────────────────────────────────────────────────── */
+  /* ── Fist ─────────────────────────────────────────────────────── */
   if (fistV > fistThr && (now - lastFistAt) > DEBOUNCE_MS) {
     lastFistAt = now;
-    const arrow = DIR_CHARS[DIRS[dirIdx]];
+    // ❌ REMOVED: DIR_CHARS[DIRS[dirIdx]]
+    // ✅ CHANGED: use currentDir — synced from Firebase /direction
+    const arrow = DIR_CHARS[currentDir] ?? '?';
     pushEvent(
       `<span class="c-fist">Fist detected</span>` +
       ` → Cursor move <span class="c-dir">${arrow}</span>`
@@ -868,44 +633,26 @@ function runDetection(eyeV, fistV) {
   }
 }
 
-/* Advance direction state and update UI arrows */
+// ❌ REMOVED: cycleDir() body that mutated dirIdx and updated DOM
+// ✅ Stubbed as a no-op so any accidental call doesn't throw a ReferenceError
 function cycleDir() {
-  dirIdx = (dirIdx + 1) % DIRS.length;
-  const dir = DIRS[dirIdx];
-
-  /* Update arrow highlights */
-  DIRS.forEach(d => el('darr-' + d).classList.remove('active'));
-  el('darr-' + dir).classList.add('active');
-  $dirLabel.textContent = dir;
-
-  return dir;
+  console.warn('[SynapseLink] cycleDir() is disabled — direction is controlled by Firebase /direction.');
 }
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 9 — EVENT LOG  (pushes to Firebase + renders in UI)
-   ══════════════════════════════════════════════════════════════════════
-   pushEvent(html) is the single function to call whenever something
-   interesting happens.  It:
-     1. Renders the row in the UI immediately (no round-trip wait)
-     2. Persists the event to Firebase /events so other clients / your
-        Python backend can observe the event log too.                  */
-
+   SECTION 9 — EVENT LOG  ← UNCHANGED
+   ══════════════════════════════════════════════════════════════════════ */
 function pushEvent(htmlMsg) {
   const ts = new Date().toTimeString().slice(0, 8);
-
-  /* Render in UI immediately */
   prependRow(ts, htmlMsg);
-
-  /* Push to Firebase /events — generates a unique push key */
   push(dbRef('events'), {
     ts,
-    html: htmlMsg,
-    created: serverTimestamp()   // server-side timestamp for ordering
+    html:    htmlMsg,
+    created: serverTimestamp()
   });
 }
 
-/* Builds and inserts a single log row at the top of the log */
 function prependRow(ts, html) {
   const row = document.createElement('div');
   row.className = 'log-row';
@@ -918,18 +665,10 @@ function prependRow(ts, html) {
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 10 — FIREBASE DATABASE STRUCTURE SEED
-   ══════════════════════════════════════════════════════════════════════
-   On the very first page load, write default threshold values only if
-   /thresholds doesn't exist yet. runTransaction ensures this is
-   atomic and won't overwrite values set by a previous session.        */
-
+   SECTION 10 — THRESHOLD SEED  ← UNCHANGED
+   ══════════════════════════════════════════════════════════════════════ */
 runTransaction(dbRef('thresholds'), (current) => {
-  if (current === null) {
-    /* First time — seed defaults */
-    return { eye: 500, fist: 600 };
-  }
-  /* Already has values — leave untouched */
+  if (current === null) return { eye: 500, fist: 600 };
   return current;
 }).then(() => {
   console.log("[SynapseLink] /thresholds seeded ✓");
@@ -937,16 +676,13 @@ runTransaction(dbRef('thresholds'), (current) => {
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   SECTION 12 — UTILITY HELPERS
+   SECTION 11 — UTILITY HELPERS  ← UNCHANGED
    ══════════════════════════════════════════════════════════════════════ */
-
-/* Flash a detection badge briefly */
 function flash(badge) {
   badge.classList.add('show');
   setTimeout(() => badge.classList.remove('show'), 750);
 }
 
-/* Pulse the Firebase sync dot in the log header */
 let fbTimer;
 function flashFb() {
   $fbDot.classList.add('pulse');
@@ -958,7 +694,6 @@ function flashFb() {
   }, 380);
 }
 
-/* Uptime counter */
 setInterval(() => {
   const sec = Math.floor((performance.now() - t0) / 1000);
   const m   = Math.floor(sec / 60).toString().padStart(2, '0');
