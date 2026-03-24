@@ -1,0 +1,170 @@
+import serial
+import json
+import time
+import requests
+import pyautogui
+
+# ==============================
+# CONFIG
+# ==============================
+SERIAL_PORT = "COM3"
+BAUD_RATE = 9600
+
+BASE_URL = "https://synapselink-6c405-default-rtdb.asia-southeast1.firebasedatabase.app"
+SIGNALS_URL = BASE_URL + "/signals.json"
+THRESHOLDS_URL = BASE_URL + "/thresholds.json"
+DIRECTION_URL = BASE_URL + "/direction.json"   # 🔥 NEW
+
+# Cursor settings
+MAX_SPEED = 25
+MIN_SPEED = 3
+DELAY = 0.05
+FIREBASE_INTERVAL = 0.1
+
+# ==============================
+# INIT SERIAL
+# ==============================
+try:
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    time.sleep(2)
+    print("✅ Connected to Arduino on", SERIAL_PORT)
+except Exception as e:
+    print("❌ Serial error:", e)
+    exit()
+
+# ==============================
+# INIT CURSOR
+# ==============================
+pyautogui.FAILSAFE = True
+
+directions = ["UP", "RIGHT", "DOWN", "LEFT"]
+dir_index = 0
+
+last_blink = 0
+prev_blink = 0
+
+DEBOUNCE = 0.6
+DOUBLE_BLINK_WINDOW = 0.5
+
+# Thresholds (from Firebase)
+eye_threshold = 500
+fist_threshold = 500
+
+last_threshold_fetch = 0
+last_firebase_send = 0
+
+print("🚀 System running: Arduino → Firebase + Cursor + Direction Sync")
+
+# ==============================
+# FUNCTIONS
+# ==============================
+def move_cursor(direction, speed):
+    if direction == "UP":
+        pyautogui.moveRel(0, -speed)
+    elif direction == "DOWN":
+        pyautogui.moveRel(0, speed)
+    elif direction == "LEFT":
+        pyautogui.moveRel(-speed, 0)
+    elif direction == "RIGHT":
+        pyautogui.moveRel(speed, 0)
+
+def calculate_speed(strength):
+    normalized = min(1.0, strength / 200)
+    curved = normalized ** 2
+    speed = int(curved * MAX_SPEED)
+    if speed < MIN_SPEED:
+        speed = MIN_SPEED
+    return speed
+
+def send_direction(direction):
+    try:
+        requests.put(DIRECTION_URL, json=direction, timeout=0.5)
+    except:
+        pass
+
+# ==============================
+# MAIN LOOP
+# ==============================
+while True:
+    try:
+        line = ser.readline().decode('utf-8', errors='ignore').strip()
+
+        if not line or not line.startswith("{"):
+            continue
+
+        data = json.loads(line)
+
+        eye = int(data["eye"])
+        fist = int(data["fist"])
+
+        print(f"\n📊 Eye: {eye} | Fist: {fist}")
+
+        # ==============================
+        # 1. SEND SIGNALS (RATE LIMITED)
+        # ==============================
+        if time.time() - last_firebase_send > FIREBASE_INTERVAL:
+            try:
+                requests.put(SIGNALS_URL, json={"eye": eye, "fist": fist}, timeout=1)
+                print("☁️ Synced signals")
+            except Exception as e:
+                print("⚠️ Firebase issue:", e)
+
+            last_firebase_send = time.time()
+
+        # ==============================
+        # 2. FETCH THRESHOLDS
+        # ==============================
+        if time.time() - last_threshold_fetch > 1:
+            try:
+                res = requests.get(THRESHOLDS_URL, timeout=1)
+                t = res.json()
+                if t:
+                    eye_threshold = t.get("eye", eye_threshold)
+                    fist_threshold = t.get("fist", fist_threshold)
+                    print(f"🎯 Thresholds → Eye:{eye_threshold} Fist:{fist_threshold}")
+            except:
+                pass
+
+            last_threshold_fetch = time.time()
+
+        now = time.time()
+
+        # ==============================
+        # 3. BLINK → CHANGE DIRECTION
+        # ==============================
+        if eye > eye_threshold and (now - last_blink) > DEBOUNCE:
+            if (now - prev_blink) < DOUBLE_BLINK_WINDOW:
+                print("🖱️ DOUBLE BLINK → CLICK")
+                pyautogui.click()
+            else:
+                dir_index = (dir_index + 1) % 4
+                current_direction = directions[dir_index]
+
+                print("🔄 Direction:", current_direction)
+
+                # 🔥 SYNC TO FIREBASE
+                send_direction(current_direction)
+
+            prev_blink = last_blink
+            last_blink = now
+
+        # ==============================
+        # 4. CONTINUOUS MOVEMENT
+        # ==============================
+        if fist > fist_threshold:
+            strength = fist - fist_threshold
+            speed = calculate_speed(strength)
+            direction = directions[dir_index]
+
+            print(f"🚀 MOVE → {direction} | Speed: {speed}")
+
+            move_cursor(direction, speed)
+        else:
+            print("⏸️ Below threshold")
+
+        time.sleep(DELAY)
+
+    except json.JSONDecodeError:
+        print("⚠️ Invalid JSON skipped")
+    except Exception as e:
+        print("❌ Error:", e)
