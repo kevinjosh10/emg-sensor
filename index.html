@@ -5,35 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SynapseLink Dashboard</title>
 
-  <!--
-  ╔══════════════════════════════════════════════════════════════════════╗
-  ║  FIREBASE MODULAR SDK  (v10 — ESM via CDN, no npm/bundler needed)   ║
-  ║                                                                      ║
-  ║  We use type="module" on the main <script> tag below so we can      ║
-  ║  import { ... } from these CDN URLs directly in the browser.        ║
-  ║                                                                      ║
-  ║  Modules loaded:                                                     ║
-  ║    • firebase/app      — core initialisation                        ║
-  ║    • firebase/database — Realtime Database read/write               ║
-  ║    • firebase/analytics— page-view analytics (optional)             ║
-  ╚══════════════════════════════════════════════════════════════════════╝
-  NOTE: No <script src="..."> tags needed for modular SDK —
-        all imports live inside the type="module" script at the bottom.
-  -->
-
-  <!-- Chart.js — loaded as a classic script so it is globally available -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap"
     rel="stylesheet"
   />
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       STYLES — UNCHANGED
-       ═══════════════════════════════════════════════════════════════ -->
   <style>
     /* ── Design tokens ─────────────────────────────────────────── */
     :root {
@@ -81,7 +60,7 @@
     .tb-left { display: flex; align-items: baseline; gap: 12px; }
     .tb-title { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: 0.02em; color: #fff; }
     .tb-sub { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
-    .tb-right { display: flex; align-items: center; gap: 20px; }
+    .tb-right { display: flex; align-items: center; gap: 14px; }
 
     .conn-pill {
       display: flex; align-items: center; gap: 6px;
@@ -97,6 +76,96 @@
 
     .lat-chip { font-size: 11px; color: var(--text-muted); }
     .lat-chip b { color: var(--warn); font-weight: 600; }
+
+    /* ── Demo pill ─────────────────────────────────────────────── */
+    .demo-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px;
+      background: rgba(244,196,48,.06);
+      border: 1px solid rgba(244,196,48,.3);
+      font-size: 11px; font-weight: 500; color: var(--warn);
+      letter-spacing: .04em;
+      transition: opacity .3s, border-color .3s, background .3s, color .3s;
+    }
+    .demo-pill.off {
+      background: rgba(75,75,100,.06);
+      border-color: rgba(75,75,100,.3);
+      color: var(--text-dim);
+      opacity: .55;
+    }
+    .demo-pill-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 6px var(--warn);
+      transition: background .3s, box-shadow .3s;
+    }
+    .demo-pill.off .demo-pill-dot {
+      background: var(--text-dim);
+      box-shadow: none;
+    }
+    @keyframes demoPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .45; transform: scale(.75); }
+    }
+    .demo-pill:not(.off) .demo-pill-dot { animation: demoPulse 1.4s ease-in-out infinite; }
+
+    /* ── Demo toggle button ────────────────────────────────────── */
+    #demo-toggle {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 5px 13px; border-radius: 6px; cursor: pointer;
+      font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      transition: all .18s ease;
+      border: 1px solid rgba(244,196,48,.4);
+      background: rgba(244,196,48,.08);
+      color: var(--warn);
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    #demo-toggle::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(244,196,48,.08);
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    #demo-toggle:hover::before { opacity: 1; }
+    #demo-toggle:active { transform: scale(.96); }
+
+    /* OFF state */
+    #demo-toggle.demo-off {
+      border-color: rgba(106,106,136,.35);
+      background: rgba(106,106,136,.06);
+      color: var(--text-muted);
+    }
+    #demo-toggle.demo-off::before { background: rgba(106,106,136,.08); }
+
+    /* Toggle track */
+    .tog-track {
+      width: 28px; height: 15px; border-radius: 8px;
+      background: rgba(244,196,48,.2);
+      border: 1px solid rgba(244,196,48,.4);
+      position: relative;
+      transition: background .2s, border-color .2s;
+      flex-shrink: 0;
+    }
+    .tog-thumb {
+      position: absolute; top: 2px; left: 2px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 5px rgba(244,196,48,.6);
+      transition: transform .2s cubic-bezier(.4,0,.2,1), background .2s, box-shadow .2s;
+    }
+    #demo-toggle.demo-off .tog-track {
+      background: rgba(106,106,136,.15);
+      border-color: rgba(106,106,136,.35);
+    }
+    #demo-toggle.demo-off .tog-thumb {
+      transform: translateX(0);
+      background: var(--text-dim);
+      box-shadow: none;
+    }
+    #demo-toggle:not(.demo-off) .tog-thumb { transform: translateX(13px); }
 
     /* ── Direction strip ───────────────────────────────────────── */
     #dir-strip {
@@ -169,6 +238,98 @@
     .thr-val.eye-col  { color: var(--eye); }
     .thr-val.fist-col { color: var(--fist); }
 
+    /* ── Spike buttons ─────────────────────────────────────────── */
+    .spike-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer;
+      font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      transition: opacity .2s, transform .1s, box-shadow .15s, background .2s, border-color .2s;
+      user-select: none;
+    }
+    .spike-btn:active:not(:disabled) { transform: scale(.94); }
+
+    /* Disabled state — shown when demo mode is OFF */
+    .spike-btn:disabled {
+      cursor: not-allowed;
+      opacity: .28;
+      filter: grayscale(.6);
+      box-shadow: none !important;
+    }
+
+    .spike-btn.eye-spike {
+      background: rgba(56,182,255,.12);
+      border: 1px solid rgba(56,182,255,.35);
+      color: var(--eye);
+    }
+    .spike-btn.eye-spike:not(:disabled):hover {
+      background: rgba(56,182,255,.22);
+      box-shadow: 0 0 10px rgba(56,182,255,.25);
+    }
+    .spike-btn.eye-spike.firing {
+      background: rgba(56,182,255,.3);
+      box-shadow: 0 0 14px rgba(56,182,255,.5);
+    }
+
+    .spike-btn.fist-spike {
+      background: rgba(255,92,56,.12);
+      border: 1px solid rgba(255,92,56,.35);
+      color: var(--fist);
+    }
+    .spike-btn.fist-spike:not(:disabled):hover {
+      background: rgba(255,92,56,.22);
+      box-shadow: 0 0 10px rgba(255,92,56,.25);
+    }
+    .spike-btn.fist-spike.firing {
+      background: rgba(255,92,56,.3);
+      box-shadow: 0 0 14px rgba(255,92,56,.5);
+    }
+
+    /* Demo hint tooltip on spike buttons */
+    .spike-wrap { position: relative; display: inline-flex; }
+    .spike-hint {
+      position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+      background: var(--surface2); border: 1px solid var(--border-hi);
+      color: var(--text-muted); font-size: 9px; letter-spacing: .04em;
+      padding: 4px 8px; border-radius: 4px; white-space: nowrap;
+      opacity: 0; pointer-events: none;
+      transition: opacity .15s;
+    }
+    .spike-hint::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 4px solid transparent; border-top-color: var(--border-hi);
+    }
+    .spike-wrap:hover .spike-hint { opacity: 1; }
+
+    /* sc-head right cluster */
+    .sc-head-right { display: flex; align-items: center; gap: 10px; }
+
+    /* ── Demo OFF overlay on chart ─────────────────────────────── */
+    .sc-chart { position: relative; }
+    .chart-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(8,8,9,.55);
+      backdrop-filter: blur(1px);
+      font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s;
+      z-index: 2;
+    }
+    .chart-overlay.show { opacity: 1; pointer-events: auto; }
+
+    /* ── Demo OFF banner ───────────────────────────────────────── */
+    #demo-off-banner {
+      display: none;
+      align-items: center; justify-content: center; gap: 10px;
+      padding: 7px 24px;
+      background: rgba(106,106,136,.06);
+      border-bottom: 1px solid rgba(106,106,136,.18);
+      font-size: 10px; color: var(--text-dim); letter-spacing: .06em;
+    }
+    #demo-off-banner.show { display: flex; }
+    .ban-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim); }
+
     /* ── Event log ─────────────────────────────────────────────── */
     .log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     .lc-head {
@@ -201,6 +362,7 @@
     .log-txt .c-dbl  { color: var(--dbl); }
     .log-txt .c-ok   { color: var(--ok); }
     .log-txt .c-err  { color: var(--err); }
+    .log-txt .c-dim  { color: var(--text-dim); }
 
     /* ── Footer ────────────────────────────────────────────────── */
     #footer {
@@ -213,15 +375,26 @@
 <body>
 <div id="app">
 
-  <!-- ══════════════════════════════════════════════════════════════
-       TOP BAR — UNCHANGED
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- TOP BAR -->
   <header id="topbar">
     <div class="tb-left">
       <span class="tb-title">SynapseLink</span>
       <span class="tb-sub">EMG Dashboard · Realtime DB</span>
     </div>
     <div class="tb-right">
+
+      <!-- Demo Mode pill (status indicator only) -->
+      <div class="demo-pill" id="demo-pill">
+        <div class="demo-pill-dot"></div>
+        <span id="demo-pill-label">Demo On</span>
+      </div>
+
+      <!-- ✅ Demo Mode toggle button -->
+      <button id="demo-toggle" title="Toggle demo mode signal simulation">
+        <span class="tog-track"><span class="tog-thumb"></span></span>
+        <span id="demo-toggle-label">Demo Mode</span>
+      </button>
+
       <div class="conn-pill offline" id="conn-pill">
         <div class="conn-dot" id="conn-dot"></div>
         <span id="conn-label">Connecting…</span>
@@ -230,9 +403,14 @@
     </div>
   </header>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       DIRECTION + DETECTION STRIP — UNCHANGED
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- Demo OFF banner — shown when demo is disabled -->
+  <div id="demo-off-banner">
+    <div class="ban-dot"></div>
+    <span>Demo mode disabled — displaying live Firebase data only. Spike buttons inactive.</span>
+    <div class="ban-dot"></div>
+  </div>
+
+  <!-- DIRECTION + DETECTION STRIP -->
   <div id="dir-strip">
     <span class="ds-label">Direction</span>
     <div class="dir-arrows">
@@ -249,9 +427,7 @@
     <div class="ds-text">Current: <strong id="dir-label">UP</strong></div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       MAIN CONTENT — UNCHANGED
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- MAIN -->
   <main id="main">
     <div class="panel-row">
 
@@ -259,13 +435,21 @@
       <div class="sig-card">
         <div class="sc-head">
           <span class="sc-title eye-col">Eye EMG Signal</span>
-          <div class="sc-live">
-            <span class="sc-val eye-col" id="eye-val">—</span>
-            <span class="sc-unit">μV</span>
+          <div class="sc-head-right">
+            <!-- Spike button wrapped for tooltip -->
+            <div class="spike-wrap">
+              <span class="spike-hint">Visual demo only — triggers spike animation</span>
+              <button class="spike-btn eye-spike" id="btn-eye-spike">⚡ Eye Spike</button>
+            </div>
+            <div class="sc-live">
+              <span class="sc-val eye-col" id="eye-val">—</span>
+              <span class="sc-unit">μV</span>
+            </div>
           </div>
         </div>
         <div class="sc-chart">
           <canvas id="eye-chart"></canvas>
+          <div class="chart-overlay" id="eye-overlay">Awaiting Live Signal</div>
         </div>
         <div class="sc-thresh">
           <span class="thr-label">Eye Threshold</span>
@@ -279,13 +463,20 @@
       <div class="sig-card">
         <div class="sc-head">
           <span class="sc-title fist-col">Fist EMG Signal</span>
-          <div class="sc-live">
-            <span class="sc-val fist-col" id="fist-val">—</span>
-            <span class="sc-unit">μV</span>
+          <div class="sc-head-right">
+            <div class="spike-wrap">
+              <span class="spike-hint">Visual demo only — triggers spike animation</span>
+              <button class="spike-btn fist-spike" id="btn-fist-spike">⚡ Fist Spike</button>
+            </div>
+            <div class="sc-live">
+              <span class="sc-val fist-col" id="fist-val">—</span>
+              <span class="sc-unit">μV</span>
+            </div>
           </div>
         </div>
         <div class="sc-chart">
           <canvas id="fist-chart"></canvas>
+          <div class="chart-overlay" id="fist-overlay">Awaiting Live Signal</div>
         </div>
         <div class="sc-thresh">
           <span class="thr-label">Fist Threshold</span>
@@ -295,7 +486,7 @@
         </div>
       </div>
 
-    </div><!-- /.panel-row -->
+    </div>
 
     <!-- Event Log -->
     <div class="log-card">
@@ -314,22 +505,17 @@
 
   </main>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       FOOTER — UNCHANGED
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER -->
   <footer id="footer">
     <span>SynapseLink · synapselink-6c405 · Firebase RTDB</span>
     <span id="uptime-display">Uptime: 0s</span>
   </footer>
 
-</div><!-- /#app -->
-
+</div>
 
 <script type="module">
 
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 1 — FIREBASE IMPORTS  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── FIREBASE IMPORTS ──────────────────────────────────────────────── */
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAnalytics }    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import {
@@ -342,10 +528,7 @@ import {
   runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 2 — FIREBASE CONFIG  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── FIREBASE CONFIG ───────────────────────────────────────────────── */
 const firebaseConfig = {
   apiKey:            "AIzaSyAlVijQ9VdYxLUVujMsg1B1II8Ehj0PpLw",
   authDomain:        "synapselink-6c405.firebaseapp.com",
@@ -364,10 +547,7 @@ const dbRef     = (path) => ref(db, path);
 
 console.log("[SynapseLink] Firebase initialised ✓  project:", firebaseConfig.projectId);
 
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 3 — CONSTANTS & STATE
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── CONSTANTS & STATE ─────────────────────────────────────────────── */
 const DATA_POINTS   = 60;
 const DEBOUNCE_MS   = 800;
 const DBL_WINDOW_MS = 550;
@@ -375,26 +555,30 @@ const DBL_WINDOW_MS = 550;
 const DIRS      = ['UP', 'RIGHT', 'DOWN', 'LEFT'];
 const DIR_CHARS = { UP: '↑', RIGHT: '→', DOWN: '↓', LEFT: '←' };
 
-// ─── DIRECTION CHANGE ────────────────────────────────────────────────
-// ❌ REMOVED:  let dirIdx = 0;
-//    dirIdx drove cycleDir() which locally computed direction — no longer needed.
-//
-// ✅ ADDED: currentDir mirrors /direction from Firebase.
-//    Python is the sole writer; JS only reads this value.
 let currentDir = 'UP';
-// ─────────────────────────────────────────────────────────────────────
-
 let lastBlinkAt = 0;
 let prevBlinkAt = 0;
 let lastFistAt  = 0;
-
 let totalEvents = 0;
-const t0        = performance.now();
+const t0 = performance.now();
 
+/* ─── DEMO MODE STATE ───────────────────────────────────────────────── */
+// Master switch — true = demo running, false = demo paused
+let demoModeOn = true;
 
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 4 — CHART.JS SETUP  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+// Timestamp of last real Firebase signal — mock skips if Firebase is live
+let lastFirebaseSignalTs = 0;
+const MOCK_PAUSE_AFTER_FB_MS = 1500;
+
+// Spike injection queues
+let eyeSpikeTicks  = 0;
+let fistSpikeTicks = 0;
+
+// Per-channel drift for organic noise
+let eyeDrift  = 100;
+let fistDrift = 90;
+
+/* ─── CHART SETUP ───────────────────────────────────────────────────── */
 const makeZeros = (n) => Array(n).fill(0);
 const labels    = Array(DATA_POINTS).fill('');
 
@@ -454,51 +638,76 @@ function setThresholdLine(chart, value) {
   chart.update('none');
 }
 
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 5 — DOM REFS  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── DOM REFS ──────────────────────────────────────────────────────── */
 const el = (id) => document.getElementById(id);
 
-const $eyeVal      = el('eye-val');
-const $fistVal     = el('fist-val');
-const $eyeSlider   = el('eyeSlider');
-const $fistSlider  = el('fistSlider');
-const $eyeThrDisp  = el('eye-thr-display');
-const $fistThrDisp = el('fist-thr-display');
-const $latMs       = el('lat-ms');
-const $dirLabel    = el('dir-label');
-const $logBody     = el('log-body');
-const $evTotal     = el('ev-total');
-const $uptime      = el('uptime-display');
-const $connPill    = el('conn-pill');
-const $connDot     = el('conn-dot');
-const $connLabel   = el('conn-label');
-const $fbDot       = el('fb-dot');
-const $fbLabel     = el('fb-label');
-const $badgeBlink  = el('badge-blink');
-const $badgeDbl    = el('badge-dbl');
-const $badgeFist   = el('badge-fist');
+const $eyeVal        = el('eye-val');
+const $fistVal       = el('fist-val');
+const $eyeSlider     = el('eyeSlider');
+const $fistSlider    = el('fistSlider');
+const $eyeThrDisp    = el('eye-thr-display');
+const $fistThrDisp   = el('fist-thr-display');
+const $latMs         = el('lat-ms');
+const $dirLabel      = el('dir-label');
+const $logBody       = el('log-body');
+const $evTotal       = el('ev-total');
+const $uptime        = el('uptime-display');
+const $connPill      = el('conn-pill');
+const $connDot       = el('conn-dot');
+const $connLabel     = el('conn-label');
+const $fbDot         = el('fb-dot');
+const $fbLabel       = el('fb-label');
+const $badgeBlink    = el('badge-blink');
+const $badgeDbl      = el('badge-dbl');
+const $badgeFist     = el('badge-fist');
+const $btnEyeSpike   = el('btn-eye-spike');
+const $btnFistSpike  = el('btn-fist-spike');
+const $demoPill      = el('demo-pill');
+const $demoPillLabel = el('demo-pill-label');
+const $demoToggle    = el('demo-toggle');
+const $demoTogLabel  = el('demo-toggle-label');
+const $demoOffBanner = el('demo-off-banner');
+const $eyeOverlay    = el('eye-overlay');
+const $fistOverlay   = el('fist-overlay');
 
+/* ─── DEMO MODE TOGGLE LOGIC ────────────────────────────────────────── */
+function applyDemoMode(on) {
+  demoModeOn = on;
 
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 6 — FIREBASE REALTIME LISTENERS
-   ══════════════════════════════════════════════════════════════════════ */
+  // Toggle button appearance
+  $demoToggle.classList.toggle('demo-off', !on);
+  $demoTogLabel.textContent = on ? 'Demo Mode' : 'Demo Mode';
 
-/* ── 6a. Connection state  ← UNCHANGED ─────────────────────────────── */
-onValue(dbRef('.info/connected'), (snap) => {
-  const online = snap.val() === true;
-  $connPill.className    = 'conn-pill ' + (online ? 'online' : 'offline');
-  $connLabel.textContent = online ? 'Connected' : 'Disconnected';
+  // Status pill
+  $demoPill.classList.toggle('off', !on);
+  $demoPillLabel.textContent = on ? 'Demo On' : 'Demo Off';
+
+  // "Demo Off" banner
+  $demoOffBanner.classList.toggle('show', !on);
+
+  // Spike buttons — disabled when demo is off
+  $btnEyeSpike.disabled  = !on;
+  $btnFistSpike.disabled = !on;
+
+  // Chart overlays — show "Awaiting Live Signal" when demo is off
+  $eyeOverlay.classList.toggle('show', !on);
+  $fistOverlay.classList.toggle('show', !on);
+
+  // Log the mode change
+  prependRow(
+    new Date().toTimeString().slice(0, 8),
+    on
+      ? `<span class="c-ok">Demo mode enabled</span> — <span class="c-dim">simulated signals active</span>`
+      : `<span class="c-dir">Demo mode disabled</span> — <span class="c-dim">live Firebase only</span>`
+  );
+}
+
+$demoToggle.addEventListener('click', () => {
+  applyDemoMode(!demoModeOn);
 });
 
-/* ── 6b. /signals  ← UNCHANGED ─────────────────────────────────────── */
-onValue(dbRef('signals'), (snap) => {
-  const data = snap.val();
-  if (!data) return;
-
-  const eyeV  = data.eye  ?? 0;
-  const fistV = data.fist ?? 0;
+/* ─── SHARED SAMPLE PROCESSOR ───────────────────────────────────────── */
+function processSample(eyeV, fistV) {
   const tStart = performance.now();
 
   eyeData.shift();  eyeData.push(eyeV);
@@ -506,15 +715,47 @@ onValue(dbRef('signals'), (snap) => {
   eyeChart.update('none');
   fistChart.update('none');
 
-  $eyeVal.textContent  = eyeV;
-  $fistVal.textContent = fistV;
+  $eyeVal.textContent  = Math.round(eyeV);
+  $fistVal.textContent = Math.round(fistV);
   $latMs.textContent   = Math.round(performance.now() - tStart);
 
   flashFb();
   runDetection(eyeV, fistV);
+}
+
+/* ─── FIREBASE LISTENERS ────────────────────────────────────────────── */
+
+// Connection state
+onValue(dbRef('.info/connected'), (snap) => {
+  const online = snap.val() === true;
+  $connPill.className    = 'conn-pill ' + (online ? 'online' : 'offline');
+  $connLabel.textContent = online ? 'Connected' : 'Disconnected';
 });
 
-/* ── 6c. /thresholds  ← UNCHANGED ──────────────────────────────────── */
+// /signals — real data; briefly dims the demo pill
+onValue(dbRef('signals'), (snap) => {
+  const data = snap.val();
+  if (!data) return;
+
+  lastFirebaseSignalTs = performance.now();
+
+  // When real data comes in, hide chart overlays regardless of demo mode
+  $eyeOverlay.classList.remove('show');
+  $fistOverlay.classList.remove('show');
+  setTimeout(() => {
+    // Re-show overlays if demo is off and Firebase goes quiet
+    if (!demoModeOn) {
+      $eyeOverlay.classList.add('show');
+      $fistOverlay.classList.add('show');
+    }
+  }, 2000);
+
+  const eyeV  = data.eye  ?? 0;
+  const fistV = data.fist ?? 0;
+  processSample(eyeV, fistV);
+});
+
+// /thresholds
 onValue(dbRef('thresholds'), (snap) => {
   const data = snap.val();
   if (!data) return;
@@ -530,36 +771,20 @@ onValue(dbRef('thresholds'), (snap) => {
   }
 });
 
-/* ── 6d. /events  ← UNCHANGED ──────────────────────────────────────── */
-onValue(dbRef('events'), (snap) => {
-  /* individual entries handled via pushEvent() below */
-});
-
-/* ── 6e. /direction  ← NEW ─────────────────────────────────────────────
-   Python backend writes one of: "UP" | "RIGHT" | "DOWN" | "LEFT"
-   The dashboard only READS this path — it never writes back.
-   This replaces all internal direction-cycling logic.                   */
+// /direction
 onValue(dbRef('direction'), (snap) => {
   const dir = snap.val();
-
-  // Ignore null or any value that isn't a recognised direction
   if (!dir || !DIR_CHARS[dir]) return;
-
-  // Keep currentDir in sync so fist log messages show the correct arrow
   currentDir = dir;
-
-  // Update the text label  (id="dir-label")
   $dirLabel.textContent = dir;
-
-  // Remove active from all four arrows, then set only the matching one
   DIRS.forEach(d => el('darr-' + d).classList.remove('active'));
   el('darr-' + dir).classList.add('active');
 });
 
+// /events (placeholder — individual entries pushed via pushEvent)
+onValue(dbRef('events'), () => {});
 
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 7 — SLIDER HANDLERS  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── SLIDER HANDLERS ───────────────────────────────────────────────── */
 $eyeSlider.addEventListener('input', () => {
   const v = Number($eyeSlider.value);
   $eyeThrDisp.textContent = v;
@@ -574,43 +799,38 @@ $fistSlider.addEventListener('input', () => {
   set(dbRef('thresholds/fist'), v);
 });
 
+/* ─── SPIKE BUTTON HANDLERS ─────────────────────────────────────────── */
+// Buttons are disabled when demo is off — these handlers only fire when enabled
+$btnEyeSpike.addEventListener('click', () => {
+  eyeSpikeTicks = 6;
+  $btnEyeSpike.classList.add('firing');
+  setTimeout(() => $btnEyeSpike.classList.remove('firing'), 400);
+});
 
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 8 — DETECTION LOGIC  ← PARTIALLY CHANGED
-   ══════════════════════════════════════════════════════════════════════
-   WHAT CHANGED:
-   • Single blink branch: cycleDir() call removed — direction comes from
-     Firebase now, so we just log the blink event.
-   • Fist branch: replaced DIRS[dirIdx] with currentDir so the log
-     message always matches what Python/Firebase says the direction is.
-   • cycleDir() is now a no-op stub (safe if called anywhere by mistake).
-   WHAT IS UNCHANGED:
-   • Debounce logic, double-blink window, badge flashing — all identical. */
+$btnFistSpike.addEventListener('click', () => {
+  fistSpikeTicks = 6;
+  $btnFistSpike.classList.add('firing');
+  setTimeout(() => $btnFistSpike.classList.remove('firing'), 400);
+});
 
+/* ─── DETECTION LOGIC ───────────────────────────────────────────────── */
 function runDetection(eyeV, fistV) {
   const now     = performance.now();
   const eyeThr  = Number($eyeSlider.value);
   const fistThr = Number($fistSlider.value);
 
-  /* ── Blink / Double-blink ─────────────────────────────────────── */
   if (eyeV > eyeThr && (now - lastBlinkAt) > DEBOUNCE_MS) {
     const isDouble = (now - prevBlinkAt) < DBL_WINDOW_MS;
     prevBlinkAt = lastBlinkAt;
     lastBlinkAt = now;
 
     if (isDouble) {
-      // Double blink → click event  (unchanged)
       pushEvent(
         `<span class="c-dbl">Double Blink</span>` +
         ` → <span class="c-dir">Click triggered</span>`
       );
       flash($badgeDbl);
     } else {
-      // Single blink detected.
-      // ❌ REMOVED: const dir = cycleDir();
-      //    cycleDir() locally mutated direction — direction is now Firebase-only.
-      // ✅ Just log the event; the /direction listener updates the UI when
-      //    Python writes the new direction to Firebase.
       pushEvent(
         `<span class="c-eye">Blink detected</span>` +
         ` → <span class="c-dir">Direction from Firebase</span>`
@@ -619,11 +839,8 @@ function runDetection(eyeV, fistV) {
     }
   }
 
-  /* ── Fist ─────────────────────────────────────────────────────── */
   if (fistV > fistThr && (now - lastFistAt) > DEBOUNCE_MS) {
     lastFistAt = now;
-    // ❌ REMOVED: DIR_CHARS[DIRS[dirIdx]]
-    // ✅ CHANGED: use currentDir — synced from Firebase /direction
     const arrow = DIR_CHARS[currentDir] ?? '?';
     pushEvent(
       `<span class="c-fist">Fist detected</span>` +
@@ -633,24 +850,11 @@ function runDetection(eyeV, fistV) {
   }
 }
 
-// ❌ REMOVED: cycleDir() body that mutated dirIdx and updated DOM
-// ✅ Stubbed as a no-op so any accidental call doesn't throw a ReferenceError
-function cycleDir() {
-  console.warn('[SynapseLink] cycleDir() is disabled — direction is controlled by Firebase /direction.');
-}
-
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 9 — EVENT LOG  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── EVENT LOG ─────────────────────────────────────────────────────── */
 function pushEvent(htmlMsg) {
   const ts = new Date().toTimeString().slice(0, 8);
   prependRow(ts, htmlMsg);
-  push(dbRef('events'), {
-    ts,
-    html:    htmlMsg,
-    created: serverTimestamp()
-  });
+  push(dbRef('events'), { ts, html: htmlMsg, created: serverTimestamp() });
 }
 
 function prependRow(ts, html) {
@@ -663,21 +867,13 @@ function prependRow(ts, html) {
   $evTotal.textContent = ++totalEvents;
 }
 
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 10 — THRESHOLD SEED  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── THRESHOLD SEED ────────────────────────────────────────────────── */
 runTransaction(dbRef('thresholds'), (current) => {
   if (current === null) return { eye: 500, fist: 600 };
   return current;
-}).then(() => {
-  console.log("[SynapseLink] /thresholds seeded ✓");
-}).catch(console.error);
+}).then(() => console.log("[SynapseLink] /thresholds seeded ✓")).catch(console.error);
 
-
-/* ══════════════════════════════════════════════════════════════════════
-   SECTION 11 — UTILITY HELPERS  ← UNCHANGED
-   ══════════════════════════════════════════════════════════════════════ */
+/* ─── UTILITY HELPERS ───────────────────────────────────────────────── */
 function flash(badge) {
   badge.classList.add('show');
   setTimeout(() => badge.classList.remove('show'), 750);
@@ -700,6 +896,72 @@ setInterval(() => {
   const s   = (sec % 60).toString().padStart(2, '0');
   $uptime.textContent = `Uptime: ${m}:${s}`;
 }, 1000);
+
+/* ─── MOCK DATA HELPERS ─────────────────────────────────────────────── */
+function driftStep(current, min, max, stepSize) {
+  const next = current + (Math.random() - 0.5) * stepSize;
+  return Math.max(min, Math.min(max, next));
+}
+
+function mockEyeSample() {
+  eyeDrift = driftStep(eyeDrift, 60, 180, 18);
+
+  if (eyeSpikeTicks > 0) {
+    eyeSpikeTicks--;
+    const phase = 6 - eyeSpikeTicks;
+    const peakMult = phase <= 2 ? 0.6 + phase * 0.2 : phase <= 4 ? 1.0 : 0.85 - (phase - 4) * 0.2;
+    return Math.round(550 + peakMult * (350 + Math.random() * 150));
+  }
+
+  if (Math.random() < 0.005) eyeSpikeTicks = 5;
+
+  return Math.round(eyeDrift + (Math.random() - 0.5) * 40);
+}
+
+function mockFistSample() {
+  fistDrift = driftStep(fistDrift, 55, 160, 16);
+
+  if (fistSpikeTicks > 0) {
+    fistSpikeTicks--;
+    const phase = 6 - fistSpikeTicks;
+    const peakMult = phase <= 2 ? 0.55 + phase * 0.22 : phase <= 4 ? 1.0 : 0.82 - (phase - 4) * 0.18;
+    return Math.round(640 + peakMult * (300 + Math.random() * 160));
+  }
+
+  if (Math.random() < 0.004) fistSpikeTicks = 5;
+
+  return Math.round(fistDrift + (Math.random() - 0.5) * 35);
+}
+
+/* ─── MOCK TICK (50 ms / ~20 Hz) ───────────────────────────────────── */
+setInterval(() => {
+  // Skip if demo mode is OFF
+  if (!demoModeOn) return;
+
+  // Skip if real Firebase data came in recently
+  if (performance.now() - lastFirebaseSignalTs < MOCK_PAUSE_AFTER_FB_MS) return;
+
+  processSample(mockEyeSample(), mockFistSample());
+}, 50);
+
+/* ─── SEED INITIAL DATA ─────────────────────────────────────────────── */
+(function seedInitial() {
+  for (let i = 0; i < DATA_POINTS; i++) {
+    eyeData[i]  = Math.round(80 + Math.random() * 80);
+    fistData[i] = Math.round(70 + Math.random() * 70);
+  }
+  eyeChart.update('none');
+  fistChart.update('none');
+  $eyeVal.textContent  = eyeData[DATA_POINTS - 1];
+  $fistVal.textContent = fistData[DATA_POINTS - 1];
+})();
+
+/* ─── INITIAL STATE APPLY ───────────────────────────────────────────── */
+// Log startup entry (don't call applyDemoMode so we skip the extra log row)
+prependRow(
+  new Date().toTimeString().slice(0, 8),
+  `<span class="c-ok">SynapseLink ready</span> — <span class="c-dim">Demo mode active</span>`
+);
 
 </script>
 </body>
