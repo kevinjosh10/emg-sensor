@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SynapseLink Dashboard</title>
+
+  <!-- External libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Internal CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <header id="topbar">
+    <div class="tb-left">
+      <span class="tb-title">SynapseLink</span>
+      <span class="tb-sub">EMG Dashboard · Realtime DB</span>
+    </div>
+    <div class="tb-right">
+
+      <div class="demo-pill" id="demo-pill">
+        <div class="demo-pill-dot"></div>
+        <span id="demo-pill-label">Demo On</span>
+      </div>
+
+      <button id="demo-toggle" title="Toggle demo mode signal simulation">
+        <span class="tog-track"><span class="tog-thumb"></span></span>
+        <span id="demo-toggle-label">Demo Mode</span>
+      </button>
+
+      <div class="conn-pill offline" id="conn-pill">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-label">Connecting…</span>
+      </div>
+      <div class="lat-chip">Latency: <b id="lat-ms">—</b> ms</div>
+    </div>
+  </header>
+
+  <div id="demo-off-banner">
+    <div class="ban-dot"></div>
+    <span>Demo mode disabled — displaying live Firebase data only. Spike buttons inactive.</span>
+    <div class="ban-dot"></div>
+  </div>
+
+  <!-- DIRECTION + DETECTION STRIP -->
+  <div id="dir-strip">
+    <span class="ds-label">Direction</span>
+    <div class="dir-arrows">
+      <div class="dir-btn active" id="darr-UP">↑</div>
+      <div class="dir-btn"        id="darr-RIGHT">→</div>
+      <div class="dir-btn"        id="darr-DOWN">↓</div>
+      <div class="dir-btn"        id="darr-LEFT">←</div>
+    </div>
+    <div class="det-badges">
+      <span class="det-badge b-eye"  id="badge-blink">● Blink</span>
+      <span class="det-badge b-dbl"  id="badge-dbl">● Dbl Blink</span>
+      <span class="det-badge b-fist" id="badge-fist">● Fist</span>
+    </div>
+    <div class="ds-text">Current: <strong id="dir-label">UP</strong></div>
+  </div>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div class="panel-row">
+
+      <!-- Eye EMG Card -->
+      <div class="sig-card">
+        <div class="sc-head">
+          <span class="sc-title eye-col">Eye EMG Signal</span>
+          <div class="sc-head-right">
+            <div class="spike-wrap">
+              <span class="spike-hint">Visual demo only — triggers spike animation</span>
+              <button class="spike-btn eye-spike" id="btn-eye-spike">⚡ Eye Spike</button>
+            </div>
+            <div class="sc-live">
+              <span class="sc-val eye-col" id="eye-val">—</span>
+              <span class="sc-unit">μV</span>
+            </div>
+          </div>
+        </div>
+        <div class="sc-chart">
+          <canvas id="eye-chart"></canvas>
+          <div class="chart-overlay" id="eye-overlay">Awaiting Live Signal</div>
+        </div>
+        <div class="sc-thresh">
+          <span class="thr-label">Eye Threshold</span>
+          <input type="range" class="eye-range" id="eyeSlider"
+                 min="100" max="1000" value="500" step="10" />
+          <span class="thr-val eye-col" id="eye-thr-display">500</span>
+        </div>
+      </div>
+
+      <!-- Fist EMG Card -->
+      <div class="sig-card">
+        <div class="sc-head">
+          <span class="sc-title fist-col">Fist EMG Signal</span>
+          <div class="sc-head-right">
+            <div class="spike-wrap">
+              <span class="spike-hint">Visual demo only — triggers spike animation</span>
+              <button class="spike-btn fist-spike" id="btn-fist-spike">⚡ Fist Spike</button>
+            </div>
+            <div class="sc-live">
+              <span class="sc-val fist-col" id="fist-val">—</span>
+              <span class="sc-unit">μV</span>
+            </div>
+          </div>
+        </div>
+        <div class="sc-chart">
+          <canvas id="fist-chart"></canvas>
+          <div class="chart-overlay" id="fist-overlay">Awaiting Live Signal</div>
+        </div>
+        <div class="sc-thresh">
+          <span class="thr-label">Fist Threshold</span>
+          <input type="range" class="fist-range" id="fistSlider"
+                 min="100" max="1000" value="600" step="10" />
+          <span class="thr-val fist-col" id="fist-thr-display">600</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Event Log -->
+    <div class="log-card">
+      <div class="lc-head">
+        <span class="lc-title">Event Log</span>
+        <div class="lc-meta">
+          <div class="fb-sync">
+            <div class="fb-dot" id="fb-dot"></div>
+            <span id="fb-label">Firebase</span>
+          </div>
+          <div class="ev-count">Events: <b id="ev-total">0</b></div>
+        </div>
+      </div>
+      <div id="log-body"></div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="footer">
+    <span>SynapseLink · synapselink-6c405 · Firebase RTDB</span>
+    <span id="uptime-display">Uptime: 0s</span>
+  </footer>
+
+</div>
+
+<!-- Internal JS Modules -->
+<script type="module" src="js/main.js"></script>
+
+</body>
+</html>
